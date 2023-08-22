@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Register Page</title>
+    <link rel="stylesheet" href="/css/register.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="/js/global.js"></script>
+    <script src="/fontawesome/js/all.min.js"></script>
+  </head>
+  <body>
+    <div class="unsupported-devices">
+      <p>
+        We are sorry but we do not support your device. Please upgrade to a
+        newer phone to view this site content.
+      </p>
+    </div>
+    <div class="custom-notification" id="account-created">
+      <p>Account created successfully! Redirecting to Login...</p>
+    </div>
+    <div class="background">
+      <img class="heythere" src="/images/logo.png" alt="logo" />
+      <div class="login-box">
+        <h2>Register</h2>
+        <form
+          action="user"
+          method="post"
+          enctype="multipart/form-data"
+          id="register-form"
+          autocomplete="on"
+        >
+          <div class="user-box">
+            <input
+              type="text"
+              name="firstName"
+              id="firstName"
+              required
+              autocomplete="given-name"
+            />
+            <label for="firstName">First Name</label>
+          </div>
+          <div class="user-box">
+            <input
+              type="text"
+              name="lastName"
+              id="lastName"
+              required
+              autocomplete="family-name"
+            />
+            <label for="lastName">Last Name</label>
+          </div>
+          <div class="user-box">
+            <input
+              id="email"
+              type="email"
+              name="email"
+              required
+              autocomplete="email"
+            />
+            <label for="email">Email</label>
+          </div>
+          <div class="user-box password">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              autocomplete="current-password"
+            />
+            <label for="password">Password</label>
+            <span
+              class="toggle-password"
+              onclick="togglePasswordVisibility('password')"
+            >
+              <i class="far fa-eye-slash"></i>
+            </span>
+          </div>
+          <div class="user-box password">
+            <input
+              type="password"
+              id="confirm_password"
+              name="confirm_password"
+              autocomplete="current-password"
+              required
+            />
+            <label for="confirm_password">Confirm Password</label>
+            <span
+              class="toggle-password"
+              onclick="togglePasswordVisibility('confirm_password')"
+            >
+              <i class="far fa-eye-slash"></i>
+            </span>
+          </div>
+          <div id="passwordError">Passwords do not match.</div>
+          <div class="user-box">
+            <input
+              type="url"
+              id="github"
+              name="github"
+              required
+              autocomplete="url"
+            />
+            <label for="github">Github account URL</label>
+          </div>
+          <div class="user-box" id="file">
+            <label for="photo">Profile Picture</label>
+            <input
+              type="file"
+              id="photo"
+              accept="image/png"
+              name="photo"
+              required
+            />
+            <div id="photoError" class="error">Passwords do not match.</div>
+          </div>
+          <div id="existingEmailError" class="error">
+            This email is already taken. Please choose another.
+          </div>
+          <button type="submit" class="login-btn">Register</button>
+          <p class="text-center">or</p>
+        </form>
+
+        <button
+          class="github-btn"
+          onclick="window.location.href=serverUrl+'/auth/github'"
+        >
+          Login with GitHub
+        </button>
+      </div>
+      <img class="heythere" src="/images/hey there text.png" alt="hey there!" />
+    </div>
+    <script>
+      const form = document.getElementById("register-form");
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const fileInput = document.getElementById("photo");
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = async () => {
+          const base64String = reader.result;
+          const formData = new FormData(form);
+          formData.set("photo", base64String);
+          const formDataObject = Object.fromEntries(formData.entries());
+          console.log("fdobj", formDataObject);
+          const formDataJsonString = JSON.stringify(formDataObject);
+          console.log("fdjson", formDataJsonString);
+          try {
+            const response = await fetch(serverUrl + "/users", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: formDataJsonString,
+            });
+            if (response.ok) {
+              const jsonResponse = await response.json();
+              console.log(jsonResponse);
+              var notificationBox = document.getElementById("account-created");
+              notificationBox.style.display = "flex";
+              await sleep(2);
+              window.location.href = "login";
+            } else {
+              const errorResponse = await response.text();
+              const errorField = document.getElementById("existingEmailError");
+              errorField.style.display = "block";
+            }
+          } catch (error) {
+            console.error(error);
+          }
+        };
+      });
+
+      //validation password match
+      const passwordInput = document.getElementById("password");
+      const confirmPasswordInput = document.getElementById("confirm_password");
+      const passwordError = document.getElementById("passwordError");
+
+      confirmPasswordInput.addEventListener("input", function () {
+        if (confirmPasswordInput.value !== passwordInput.value) {
+          passwordError.style.display = "block";
+        } else {
+          passwordError.style.display = "none";
+        }
+      });
+
+      //toogle password visibility
+      function togglePasswordVisibility(inputId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleButton = document.querySelector(
+          `[onclick="togglePasswordVisibility('${inputId}')"]`
+        );
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          toggleButton.innerHTML = '<i class="far fa-eye-slash"></i>';
+        } else {
+          passwordInput.type = "password";
+          toggleButton.innerHTML = '<i class="far fa-eye"></i>';
+        }
+      }
+
+      //validate image size
+      var fileInput = document.getElementById("photo");
+      var dimensionError = document.getElementById("photoError");
+
+      fileInput.addEventListener("change", function () {
+        var file = fileInput.files[0];
+
+        var image = new Image();
+        image.src = window.URL.createObjectURL(file);
+
+        image.onload = function () {
+          if (image.width !== image.height) {
+            dimensionError.textContent =
+              "Invalid dimensions. The image must be a square";
+            dimensionError.style.display = "block";
+            fileInput.value = ""; // reset the file input field
+          } else {
+            dimensionError.style.display = "none";
+          }
+        };
+      });
+
+      //sleep function
+      function sleep(seconds) {
+        return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+      }
+
+
+    </script>
+  </body>
+</html>

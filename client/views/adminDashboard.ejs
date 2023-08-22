@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Brainhub Social Media App</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/css/adminDashboard.css">
+    <script src="/fontawesome/js/all.min.js"></script>
+    <script src="/js/global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handlebars/dist/handlebars.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <body>
+    <div class="custom-notification" id="imported-succes">
+      <p>Imported successfully!</p>
+      <button class="custom-close-btn" id="custom-close-btn-1">&times;</button>
+    </div>
+    <div class="custom-notification" id="imported-failure">
+      <p>Importing failed!</p>
+      <button class="custom-close-btn" id="custom-close-btn-2">&times;</button>
+    </div>
+    <div class="custom-notification" id="exported-succes">
+      <p>Exported successfully!</p>
+      <button class="custom-close-btn" id="custom-close-btn-3">&times;</button>
+    </div>
+    <div class="navbar">
+      <div class="navbar-left">
+        <a class="logo" href="/"><img src="/images/logo black color.png" alt="logo black color"></a>
+      </div>
+      <div class="navbar-center">
+        <div id="search-container">
+          <input type="text" placeholder="Search...">
+        </div>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="left-sidebar">
+        <div class="left-sidebar-section">
+          <div class="left-sidebar-section-title">
+            <h3>Admin Dashboard</h3>
+          </div>
+          <div class="left-sidebar-section-body">
+            <ul>
+              <a href="post/">
+                <li>Import</li>
+              </a>
+              <a href="profile/">
+                <li>Export</li>
+              </a>
+              <a href="#" id="logout-link">
+                <li>Logout</li>
+              </a>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="center-content" id="post-container">
+        <div id="import" class="white-round-section">
+          <div class="section-title">
+            <h1>Import data</h1>
+          </div>
+            <form id="import-form">
+              <label for="userProfilesFile">JSON File:</label>
+              <input type="file" id="userProfilesFile" accept=".json" required><br>
+              <label for="dataType">Data Type:</label>
+              <select id="dataType" required>
+                <option value="users">Users</option>
+                <option value="posts">Posts</option>
+              </select><br>
+              <button class="import-export-button" type="submit">Import</button>
+            </form>
+        </div>
+        <div id="export" class="white-round-section">
+          <div class="section-title">
+            <h1>Export data</h1>
+          </div>
+          <div class="section-content">
+            <button class="import-export-button" id="export-users" onclick="exportUsers()">
+              Export Users
+            </button>
+            <button class="import-export-button" id="export-posts" onclick="exportPosts()">
+              Export Posts
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  <script>
+    //global vars
+    const socket = io("http://localhost:5000", {
+      withCredentials: true,
+      extraHeaders: {
+        "Access-Control-Allow-Origin": "http://localhost:3000"
+      }
+    });
+    async function getCurrentUser() {
+      try {
+        const response = await fetch(serverUrl + '/users/current', { 
+          method: 'GET', 
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const currentUser = await response.json();
+          console.log("currentUser:", currentUser);
+          return currentUser.user;
+        } else if (response.status === 401) {
+          window.location.href = "../login";
+        } else {
+          throw new Error("Failure");
+        }
+      } catch (err) {
+        throw err; 
+      }
+    }
+
+    //logout button in left menu
+    document.getElementById("logout-link").addEventListener("click", async function(event) {
+      event.preventDefault(); 
+
+      try{
+        const response = await fetch(serverUrl + "/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials:"include"
+        });
+        if(response.ok || response.status === 401){
+          window.location.href = "../login";
+        }
+      } catch(err){
+        console.log(err);
+      }
+    });
+
+
+    //search bar
+    const searchInput = document.querySelector('#search-container input');
+    let searchResultsContainer = document.querySelector('.search-results-container');
+
+    if (!searchResultsContainer) {
+      searchResultsContainer = document.createElement('div');
+      searchResultsContainer.classList.add('search-results-container');
+    }
+    searchInput.addEventListener('keyup', async (event) => {
+      const searchTerm = event.target.value;
+      if (!searchTerm.trim()) {
+        searchResultsContainer.innerHTML = '';
+        return;
+      }
+      // console.log("key:", searchTerm);
+      const response = await fetch(serverUrl + `/users?query=${searchTerm}`, {
+        method: 'GET',
+        headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+      });
+      if (response.status === 401) {
+        window.location.href = "../login";
+      }
+      const searchResults = await response.json();
+      console.log("search results:",searchResults);
+      const searchResultDivs = searchResults.response.map(searchResult => {
+        const searchResultDiv = document.createElement('div');
+        searchResultDiv.classList.add('search-result');
+
+        const profileLink = document.createElement('a');
+        profileLink.href = `./admin-profile/${searchResult.id}`;
+
+        const leftDiv = document.createElement('div');
+        leftDiv.classList.add('left');
+
+        const rightDiv = document.createElement('div');
+        rightDiv.classList.add('right');
+
+        const profileImage = document.createElement("img");
+        profileImage.src = `${serverUrl + '/uploads/profilePictures/' + searchResult.photo}`;
+        leftDiv.appendChild(profileImage);
+
+        const profileName = document.createElement('span');
+        profileName.textContent = `${searchResult.firstName} ${searchResult.lastName}`;
+        rightDiv.appendChild(profileName);
+
+        profileLink.appendChild(leftDiv);
+        profileLink.appendChild(rightDiv);
+
+        searchResultDiv.appendChild(profileLink);
+
+        return searchResultDiv;
+      });
+      searchResultsContainer.innerHTML = 'No users with this name found';
+      if(searchResultDivs.length!==0){
+        searchResultsContainer.innerHTML = '';
+        searchResultDivs.forEach(searchResultDiv => {
+          searchResultsContainer.appendChild(searchResultDiv);
+        });
+      }
+      if (!document.body.contains(searchResultsContainer)) {
+        document.body.appendChild(searchResultsContainer);
+      } else {
+        searchResultsContainer.style.display = 'flex';
+      }
+    });
+
+    document.addEventListener('click', event => {
+      if (event.target !== searchInput && !searchResultsContainer.contains(event.target)) {
+        searchResultsContainer.style.display = 'none';
+      }
+    });
+
+    // export functionality
+    async function exportUsers() {
+      try {
+        const response = await fetch(serverUrl + '/users/admin', {
+           method: 'GET',
+          credentials:"include"          
+        });
+
+        if(response.ok){
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'users.json';
+          link.click();
+          document.getElementById('exported-succes').style.display = 'block';
+          window.URL.revokeObjectURL(url);
+        }
+        else if (response.status === 401) {
+          window.location.href = "../login";
+        }
+      } catch (error) {
+        console.error('Error exporting users:', error);
+      }
+    }
+
+    async function exportPosts() {
+      try {
+        const response = await fetch(serverUrl + '/posts/admin', { 
+          method: 'GET',
+          credentials:"include"
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'posts.json';
+          link.click();
+          document.getElementById('exported-succes').style.display = 'block';
+          window.URL.revokeObjectURL(url);
+        } else if(response.status===401){
+          window.location.href = "../login";
+        }
+      } catch (error) {
+        console.error('Error exporting posts:', error);
+      }
+    }
+
+    // Import functionality
+    document.getElementById('import-form').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const fileInput = document.getElementById('userProfilesFile');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        console.error('No file selected');
+        return;
+      }
+
+      const importJson = await readFileAsText(file);
+      const selectedOption = document.getElementById('dataType').value;
+
+      if (selectedOption === 'users') {
+        createUsers(importJson);
+      } else if (selectedOption === 'posts') {
+        createPosts(importJson);
+      }
+    });
+
+
+    function readFileAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+          const text = event.target.result;
+          resolve(text);
+        };
+
+        reader.onerror = function(event) {
+          reject(event.target.error);
+        };
+
+        reader.readAsText(file);
+      });
+    }
+
+    async function createUsers(usersJson) {
+      try {
+        const parsedUsers = JSON.parse(usersJson); // Parse the JSON string
+
+        const data = {
+          users: parsedUsers // Use the parsed users object
+        };
+
+        console.log("sent json data:",JSON.stringify(data));
+        const response = await fetch(serverUrl + '/users/admin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: "include",
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          document.getElementById('imported-succes').style.display = 'block';
+        } else if (response.status === 401) {
+          window.location.href = "../login";
+        } else if (response.status === 400){
+          document.getElementById('imported-failure').style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error creating user profiles:', error);
+      }
+    }
+
+    async function createPosts(postsJson) {
+      try {
+        const parsedPosts = JSON.parse(postsJson); // Parse the JSON string
+
+        const data = {
+          posts: parsedPosts // Use the parsed posts object
+        };
+
+        console.log("sent json data:", JSON.stringify(data));
+        const response = await fetch(serverUrl + '/posts/admin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: "include",
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          document.getElementById('imported-succes').style.display = 'block';
+        } else if (response.status === 401) {
+          window.location.href = "../login";
+        } else if (response.status === 400){
+          document.getElementById('imported-failure').style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error creating post profiles:', error);
+      }
+    }
+
+    //close custom notification
+    var customCloseButton1 = document.getElementById('custom-close-btn-1');
+    var customCloseButton2 = document.getElementById('custom-close-btn-2');
+    var customCloseButton3 = document.getElementById('custom-close-btn-3');
+    var importedSucces = document.getElementById('imported-succes');
+    var exportedSucces = document.getElementById('exported-succes');
+    var importedFailure = document.getElementById('imported-failure');
+
+    customCloseButton1.addEventListener('click', function() {
+      importedSucces.style.display = 'none';
+    });
+
+    customCloseButton2.addEventListener('click', function() {
+      importedFailure.style.display = 'none';
+    });
+
+    customCloseButton3.addEventListener('click', function() {
+      exportedSucces.style.display = 'none';
+    });
+
+
+  </script>
+  </body>
+</html>

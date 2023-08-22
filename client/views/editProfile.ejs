@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Brainhub Social Media App</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/css/editProfile.css">
+    <script src="/fontawesome/js/all.min.js"></script>
+    <script src="/js/global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handlebars/dist/handlebars.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <body>
+    <div class="unsupported-devices">
+      <p>
+        We are sorry but we do not support your device. Please upgrade to a
+        newer phone to view this site content.
+      </p>
+    </div>
+    <div class="custom-notification" id="changes-succes">
+      <p>Changes applied succesfully!</p>
+      <button class="custom-close-btn">&times;</button>
+    </div>
+    <div id="navbar">
+      <div class="navbar-left">
+        <a class="logo" href="/home"><img src="/images/logo black color.png" alt="logo black color"></a>
+      </div>
+      <div class="navbar-center">
+        <div id="search-container">
+          <input type="text" id="search-input" placeholder="Search...">
+          <button id="clear-button" onclick="clearSearch()">Clear</button>
+        </div>
+      </div>
+      <div class="navbar-right">
+        <div class="notifications-icon follow-requests-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="notifications-icon notification-button">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge">0</span>
+        </div>
+        <div class="profile-picture">
+          <a href="/profile"><img src="#" alt="Profile Picture" id="profile-picture-img"></a>
+        </div>
+      </div>
+    </div>
+    <div class="mobile-menu">
+      <div class="notifications-icon" id="home-icon">
+        <a href="/home" ><i class="fas fa-home"></i></a>
+      </div>
+      <div class="notifications-icon" id="search-icon">
+        <i class="fas fa-search"></i>
+      </div>
+      <div class="notifications-icon follow-requests-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="notifications-icon notification-button">
+        <i class="fas fa-bell"></i>
+        <span class="notification-badge">0</span>
+      </div>
+      <div class="profile-picture">
+        <a href="/profile"><img src="http://localhost:5000/uploads/profilePictures/1686698387910-45463347.png" alt="Profile Picture" id="profile-picture-img"></a>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="left-sidebar">
+        <h3>Posts Management</h3>
+        <p>Here you can edit your profile easily by completing this form.</p>
+        <h3>Useful links</h3>
+        <ul>
+          <a href="../home"><li>Home</li></a>
+          <a href="#" id="logout-link">
+            <li>Logout</li>
+          </a>
+        </ul>
+      </div>
+      <div class="center-content">
+        <script id="profile-template" type="text/x-handlebars-template">
+          <form id="edit-profile-form">
+            <label for="firstName">First Name:</label>
+            <input class="update-profile-form-input" type="text" id="firstName" name="firstName" value="{{user.firstName}}" required autocomplete="given-name">
+            <br>
+            <label for="lastName">Last Name:</label>
+            <input class="update-profile-form-input" type="text" id="lastName" name="lastName" value="{{user.lastName}}" required autocomplete="family-name">
+            <br>
+
+            <label for="email">Email:</label>
+            <input class="update-profile-form-input" id="email" name="email" value="{{user.email}}" required autocomplete="email">
+            <br>
+
+            <label for="password">Password:</label>
+            <input class="update-profile-form-input" id="password" name="password" value="" autocomplete="new-password">
+            <br>
+
+            <label for="github">Github:</label>
+            <input class="update-profile-form-input" type="text" id="github" name="github" value="{{user.github}}" required autocomplete="url">
+            <br>
+
+            <label for="photo">Photo:</label>
+            <input class="update-profile-form-input" type="file" id="photo" name="photo">
+            <br>
+
+            <button type="submit">Update User</button>
+          </form>
+        </script>
+        <div id="profile-container"></div>
+      </div>
+    </div>
+  <script>
+
+    //global vars
+    const socket = io("http://localhost:5000", {
+      withCredentials: true,
+      extraHeaders: {
+        "Access-Control-Allow-Origin": "http://localhost:3000"
+      }
+    });
+    async function getCurrentUser() {
+      try {
+        const response = await fetch(serverUrl + '/users/current', { 
+          method: 'GET', 
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const currentUser = await response.json();
+          console.log("currentUser:", currentUser);
+          return currentUser.user;
+        } else if (response.status === 401) {
+          window.location.href = "../login";
+        } else {
+          throw new Error("Failure");
+        }
+      } catch (err) {
+        throw err; 
+      }
+    }
+    
+    //currentUser profile pic
+    async function displayCurrentUserProfilePicture(){
+      const currentUserProfilePictureElement = document.getElementById('profile-picture-img');
+      try{
+        const currentUser = await getCurrentUser();
+        currentUserProfilePictureElement.src = serverUrl + '/uploads/profilePictures/' + currentUser.photo ;
+      } catch (err){
+        console.log(err);
+      }
+    }
+    displayCurrentUserProfilePicture();
+
+
+    //populate form
+    async function populateForm(){
+      const user = await getCurrentUser();
+      const profileContainer = document.getElementById('profile-container');
+      const profileTemplate = document.getElementById('profile-template').innerHTML;
+      const template = Handlebars.compile(profileTemplate);
+      profileContainer.innerHTML = template({ user });
+      sendForm();
+    }
+    populateForm();
+
+
+    //send form
+    function sendForm(){
+      const form = document.getElementById("edit-profile-form");
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const fileInput = document.getElementById("photo");
+        const file = fileInput.files[0];
+        if(file){
+          console.log("exista file");
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onloadend = async () => {
+            const base64String = reader.result;
+            const formData = new FormData(form);
+            formData.set("photo", base64String);
+            const formDataObject = Object.fromEntries(formData.entries());
+            console.log("fdobj", formDataObject);
+            const formDataJsonString = JSON.stringify(formDataObject);
+            console.log("fdjson", formDataJsonString);
+            try {
+              const response = await fetch(serverUrl + "/users/", {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: formDataJsonString,
+                credentials: "include"
+              });
+              if (response.ok) {
+                const jsonResponse = await response.json();
+                console.log(jsonResponse);
+                displayCurrentUserProfilePicture();
+                populateForm();
+                document.getElementById("changes-succes").style.display = "block";
+              } else {
+                const errorResponse = await response.text();
+                alert(errorResponse);
+              }
+            } catch (error) {
+              console.error(error);
+            }
+          };
+        } else{
+          console.log("nu exista file");
+          try {
+              const formData = new FormData(form);
+              formData.set("photo", "");
+              const formDataObject = Object.fromEntries(formData.entries());
+              console.log("fdobj", formDataObject);
+              const formDataJsonString = JSON.stringify(formDataObject);
+              console.log("formdatajsonstring:",formDataJsonString);
+              const response = await fetch(serverUrl + "/users/", {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: formDataJsonString,
+                credentials: "include"
+              });
+              if (response.ok) {
+                const jsonResponse = await response.json();
+                console.log(jsonResponse);
+                populateForm();
+                document.getElementById("changes-succes").style.display = "block";
+              } else {
+                const errorResponse = await response.text();
+                alert(errorResponse);
+              }
+          } catch (error) {
+            console.error(error);
+          }
+        }
+      });
+    }
+
+        // follow requests
+    const navbarRightStyle =window.getComputedStyle(document.querySelector('.navbar-right')).getPropertyValue('display');
+    const navbarIconArray = document.querySelectorAll('.follow-requests-icon');
+    var navbarIcon;
+    if(navbarRightStyle==='flex'){
+      navbarIcon = navbarIconArray[0];
+    } else if(navbarRightStyle==='none'){
+      navbarIcon = navbarIconArray[1];
+    }
+
+    navbarIcon.addEventListener('click', async () => {
+      // console.log("click navbar follow requests");
+      const containerExistence = document.querySelector('.follow-requests-container');
+      if (containerExistence) {
+        containerExistence.remove();
+        return;
+      }
+
+      const response = await fetch(serverUrl + '/users/follow-requests', {
+        method: 'GET',
+        headers: {
+            "Content-Type": "application/json",
+          },
+        credentials: "include",
+      });
+      if (response.status === 401) {
+        window.location.href = "../login";
+      }
+      const followRequests = await response.json();
+
+      // console.log("respone follow request:", followRequests);
+      const followRequestsContainer = document.createElement('div');
+      followRequestsContainer.classList.add('follow-requests-container');
+
+      if (followRequests.followers.length === 0) {
+        const messageElement = document.createElement('p');
+        messageElement.textContent = 'No follow requests at this time.';
+        followRequestsContainer.appendChild(messageElement);
+      } else {
+        console.log("follow req:", followRequests);
+        followRequests.followers.forEach(followRequest => {
+          const followRequestDiv = document.createElement('div');
+          followRequestDiv.classList.add('follow-request');
+
+          const followRequestDivFirst = document.createElement('div');
+          followRequestDivFirst.classList.add('follow-request-first');
+
+          const followRequestDivSecond = document.createElement('div');
+          followRequestDivSecond.classList.add('follow-request-second');
+
+          const photoElement = document.createElement('img');
+          const photo = followRequest["followers.photo"];
+          photoElement.src = serverUrl + '/uploads/profilePictures/' + photo;
+          
+          const username = followRequest["followers.firstName"] + ' ' + followRequest["followers.lastName"];
+          const usernameElement = document.createElement('p');
+
+          const userProfileLinkUsername = document.createElement('a');
+          userProfileLinkUsername.href = `/public-profile/${followRequest["followers.id"]}`;
+          userProfileLinkUsername.textContent = username;
+          usernameElement.appendChild(userProfileLinkUsername);
+
+          const userProfileLinkPhoto = document.createElement('a');
+          userProfileLinkPhoto.href = `/public-profile/${followRequest["followers.id"]}`;
+          userProfileLinkPhoto.appendChild(photoElement);
+
+          followRequestDivFirst.appendChild(userProfileLinkPhoto);
+
+          const acceptButton = document.createElement('button');
+          acceptButton.textContent = 'Accept';
+          const rejectButton = document.createElement('button');
+          rejectButton.textContent = 'Reject';
+
+          acceptButton.addEventListener('click', async () => {
+            await fetch(`${serverUrl}/users/follow-requests/accept/${followRequest.id}`, {
+              method: 'PUT',
+              headers: {
+                "Content-Type" : "application/json"
+              },
+              credentials: "include"
+            });
+            followRequestDiv.remove();
+          });
+          rejectButton.addEventListener('click', async () => {
+            await fetch(`${serverUrl}/users/follow-requests/reject/${followRequest.id}`, { 
+              method: 'PUT',
+              headers: {
+                "Content-Type" : "application/json"
+              },
+              credentials: "include"
+            });
+            followRequestDiv.remove();
+          });
+
+          const followRequestDivSecondButtons = document.createElement('div');
+          followRequestDivSecondButtons.classList.add('follow-request-second-buttons');
+
+          followRequestDivSecondButtons.appendChild(acceptButton);
+          followRequestDivSecondButtons.appendChild(rejectButton);
+          followRequestDivSecond.appendChild(usernameElement);
+          followRequestDivSecond.appendChild(followRequestDivSecondButtons);
+          followRequestDiv.appendChild(followRequestDivFirst);
+          followRequestDiv.appendChild(followRequestDivSecond);
+          followRequestsContainer.appendChild(followRequestDiv);
+        });
+      }
+      document.body.appendChild(followRequestsContainer);
+
+    });
+
+    document.addEventListener('click', event => {
+      if (event.target !== navbarIcon && !navbarIcon.contains(event.target)) {
+        const containerExistence = document.querySelector('.follow-requests-container');
+        if (containerExistence) {
+          containerExistence.remove();
+        }
+      }
+    });
+
+    //clear search
+    function clearSearch() {
+      document.getElementById('search-input').value = ''; 
+    }
+
+
+    //search bar
+    const searchContainer = document.getElementById('search-container');
+    const searchInput = document.querySelector('#search-container input');
+    let searchResultsContainer = document.querySelector('#search-results-container');
+
+    if (!searchResultsContainer) {
+      searchResultsContainer = document.createElement('div');
+      searchResultsContainer.setAttribute('id', 'search-results-container');
+      searchResultsContainer.style.display = 'none';
+      document.body.appendChild(searchResultsContainer);
+    }
+    searchInput.addEventListener('keyup', async (event) => {
+      const searchTerm = event.target.value;
+      if (!searchTerm.trim()) {
+        searchResultsContainer.innerHTML = '';
+        return;
+      }
+      // console.log("key:", searchTerm);
+      const response = await fetch(serverUrl + `/users?query=${searchTerm}`, {
+        method: 'GET',
+        headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+      });
+      if (response.status === 401) {
+        window.location.href = "../login";
+      }
+      const searchResults = await response.json();
+      console.log("search results:",searchResults);
+      const searchResultDivs = searchResults.response.map(searchResult => {
+        const searchResultDiv = document.createElement('div');
+        searchResultDiv.classList.add('search-result');
+
+        const profileLink = document.createElement('a');
+        profileLink.href = `./public-profile/${searchResult.id}`;
+
+        const leftDiv = document.createElement('div');
+        leftDiv.classList.add('left');
+
+        const rightDiv = document.createElement('div');
+        rightDiv.classList.add('right');
+
+        const profileImage = document.createElement("img");
+        profileImage.src = `${serverUrl + '/uploads/profilePictures/' + searchResult.photo}`;
+        leftDiv.appendChild(profileImage);
+
+        const profileName = document.createElement('span');
+        profileName.textContent = `${searchResult.firstName} ${searchResult.lastName}`;
+        rightDiv.appendChild(profileName);
+
+        profileLink.appendChild(leftDiv);
+        profileLink.appendChild(rightDiv);
+
+        searchResultDiv.appendChild(profileLink);
+
+        return searchResultDiv;
+      });
+      searchResultsContainer.innerHTML = 'No users with this name found';
+      if(searchResultDivs.length!==0){
+        searchResultsContainer.innerHTML = '';
+        searchResultDivs.forEach(searchResultDiv => {
+          searchResultsContainer.appendChild(searchResultDiv);
+        });
+      }
+      if (!document.body.contains(searchResultsContainer)) {
+        document.body.appendChild(searchResultsContainer);
+      } else {
+        searchResultsContainer.style.display = 'flex';
+      }
+    });
+
+    document.addEventListener('click', event => {
+      if (event.target !== searchInput && !searchResultsContainer.contains(event.target)) {
+        searchResultsContainer.style.display = 'none';
+      }
+    });
+
+    //search icon
+    const navbarCenter = document.getElementsByClassName('navbar-center')[0];
+    const navbarLeft = document.getElementsByClassName('navbar-left')[0];
+    const logoImg = document.querySelector('.logo img');
+    const searchIcon = document.getElementById('search-icon');
+    var isSearchVisible = false;
+
+    function addSearchIconFunctionality(){
+      searchIcon.addEventListener('click', () => {
+        if(!isSearchVisible){
+          navbarCenter.style.display='flex';
+          navbarCenter.style.padding='0px 10px';
+          navbarLeft.style.width = '20%';
+          navbarCenter.style.width='80%';
+          const navbar = document.getElementById('navbar');
+          navbar.style.height = '62px';
+          logoImg.style.width = '100%';
+          logoImg.style['object-fit'] = 'contain';
+          logoImg.style.transform = 'scale(120%)';
+          const logoHref = document.querySelector('.logo');
+          logoHref.style['margin-left'] = '0px';
+          logoHref.style.padding = '0px';
+
+          searchResultsContainer.style.width = '100%';
+          searchResultsContainer.style.boxSizing = 'border-box';
+          searchResultsContainer.style.borderRadius = '0px';
+          searchResultsContainer.style.height = 'calc(100vh - 62px - 62px)';
+          searchResultsContainer.style.maxHeight = 'calc(100vh - 62px - 62px)';
+          
+          isSearchVisible = true;
+        } else{
+          navbarCenter.style.display='none';
+          navbarLeft.style.width = '100%';
+          logoImg.style.transform = 'scale(80%)';
+
+          isSearchVisible = false;
+        }
+      });
+    }
+    addSearchIconFunctionality();
+    document.addEventListener('click', event => {
+      if (isSearchVisible && !searchIcon.contains(event.target) && !searchContainer.contains(event.target) && !searchResultsContainer.contains(event.target)) {
+        navbarCenter.style.display='none';
+        navbarLeft.style.width = '100%';
+        logoImg.style.transform = 'scale(80%)';
+        isSearchVisible = false;
+      }
+    });
+
+    //notifications:
+    async function notifications(){
+      const notificationButtonArray = document.querySelectorAll('.notification-button');
+      const notificationBadgeArray = document.querySelectorAll('.notification-badge');
+      var notificationButton;
+      var notificationBadge;
+      const navbarRightStyle =window.getComputedStyle(document.querySelector('.navbar-right')).getPropertyValue('display');
+      const navbarIconArray = document.querySelectorAll('.follow-requests-icon');
+      if(navbarRightStyle==='flex'){
+        notificationButton = notificationButtonArray[0];
+        notificationBadge = notificationBadgeArray[0];
+      } else if(navbarRightStyle==='none'){
+        notificationButton = notificationButtonArray[1];
+        notificationBadge = notificationBadgeArray[1];
+      }
+
+      const number = 20;
+      var interval = null;
+      var currentCount = parseInt(notificationBadge.textContent);
+      const currentUser = await getCurrentUser();
+      var clickedContainer = false;
+
+      socket.emit('join', currentUser.id);
+      console.log("join la room: ", currentUser.id);
+      socket.on('notification', function(message) {
+        console.log("notification");
+        const newCount = currentCount + 1;
+        currentCount = newCount;
+        notificationBadge.textContent = newCount;
+        if(!clickedContainer)
+          notificationBadge.style.display = 'flex';
+      })
+      
+      notificationButton.addEventListener('click', async () => {
+        currentCount = 0;
+        notificationBadge.style.display = 'none';
+        const containerExistence = document.querySelector('.notifications-container');
+        if (containerExistence) {
+          containerExistence.remove();
+          clickedContainer = false;
+          if(currentCount > 0)
+            notificationBadge.style.display = 'flex';
+          return;
+        }
+        const notificationsContainer = document.createElement('div');
+        notificationsContainer.classList.add('notifications-container');
+        try{
+          const response = await fetch(serverUrl + `/users/notifications?${number}`, {
+            method: 'GET', 
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          });
+          if (response.status === 401) {
+            window.location.href = "../login";
+          } else{
+            const notificationsJson = await response.json();
+            const notifications = notificationsJson.notifications;
+            if(notifications.length === 0){
+              const messageElement = document.createElement('p');
+              messageElement.textContent = 'No notifications at this time.';
+              notificationsContainer.appendChild(messageElement);
+            } else {
+              notifications.forEach(notification => {
+                console.log(notification);
+                const notificationSection = document.createElement('div');
+                notificationSection.classList.add('notification-section');
+                const notificationSectionLeft = document.createElement('div');
+                notificationSectionLeft.classList.add('notification-section-left');
+                const notificationSectionRight = document.createElement('div');
+                notificationSectionRight.classList.add('notification-section-right');
+                notificationSection.appendChild(notificationSectionLeft);
+                notificationSection.appendChild(notificationSectionRight);
+
+                const postLink = document.createElement('a');
+                const profileLink = document.createElement('a');
+                const profileImg = document.createElement('img');
+                postLink.href =  `post/${notification.Post.id}`;
+                postLink.appendChild(notificationSection)
+                profileImg.src =serverUrl + '/uploads/profilePictures/' + notification.notificating.photo;
+                profileImg.alt = 'notification user profile';
+                profileLink.appendChild(profileImg);
+                notificationSectionLeft.appendChild(profileLink);
+
+                const notificationContent = document.createElement('p');
+                notificationContent.textContent = notification.content;
+                notificationSectionRight.appendChild(notificationContent);
+
+                notificationsContainer.appendChild(postLink);
+              })
+            }
+          }
+        } catch (error) {
+          console.log(error);
+        }
+        document.body.appendChild(notificationsContainer);
+        clickedContainer = true;
+      });
+
+      document.addEventListener('click', event => {
+        if (event.target !== notificationButton) {
+          const containerExistence = document.querySelector('.notifications-container');
+          if (containerExistence) {
+            containerExistence.remove();
+            clickedContainer = false;
+            if(currentCount > 0)
+              notificationBadge.style.display = 'flex';
+          }
+        }
+      });
+    }
+    notifications();
+
+    //logout button in left menu
+    document.getElementById("logout-link").addEventListener("click", async function(event) {
+      event.preventDefault(); 
+
+      try{
+        const response = await fetch(serverUrl + "/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials:"include"
+        });
+        if(response.ok || response.status === 401){
+          window.location.href = "../login";
+        }
+      } catch(err){
+        console.log(err);
+      }
+    });
+
+    //close custom notification
+    var customCloseButton = document.querySelector('.custom-close-btn');
+    var notificationBox = document.querySelector('.custom-notification');
+
+    customCloseButton.addEventListener('click', function() {
+      notificationBox.style.display = 'none';
+    });
+  </script>
+  </body>
+</html>

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Brainhub Social Media App</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/css/adminProfile.css">
+    <script src="/fontawesome/js/all.min.js"></script>
+    <script src="/js/global.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/handlebars/dist/handlebars.min.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+  <body>
+    <div class="custom-notification" id="changes-succes">
+      <p>Changes applied succesfully!</p>
+      <button class="custom-close-btn">&times;</button>
+    </div>
+    <div id="public-profile-user-id" data-id-user="<%= userId %>"></div>
+    <div class="navbar">
+      <div class="navbar-left">
+        <a class="logo" href="/adminDashboard"><img src="/images/logo black color.png" alt="logo black color"></a>
+      </div>
+      <div class="navbar-center">
+        <div id="search-container">
+          <input type="text" placeholder="Search...">
+        </div>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="center-content">
+        <script id="profile-template" type="text/x-handlebars-template">
+          <button class="close-button" id="close-button">×</button>
+          <form id="edit-profile-form">
+            <label for="firstName">First Name:</label>
+            <input class="update-profile-form-input" type="text" id="firstName" name="firstName" value="{{user.firstName}}" required autocomplete="given-name">
+            <br>
+            <label for="lastName">Last Name:</label>
+            <input class="update-profile-form-input" type="text" id="lastName" name="lastName" value="{{user.lastName}}" required autocomplete="family-name">
+            <br>
+
+            <label for="email">Email:</label>
+            <input class="update-profile-form-input" id="email" name="email" value="{{user.email}}" required autocomplete="email">
+            <br>
+
+            <label for="password">Password:</label>
+            <input class="update-profile-form-input" id="password" name="password" value="" autocomplete="new-password">
+            <br>
+
+            <label for="github">Github:</label>
+            <input class="update-profile-form-input" type="text" id="github" name="github" value="{{user.github}}" required autocomplete="url">
+            <br>
+
+            <label for="photo">Photo:</label>
+            <input class="update-profile-form-input" type="file" id="photo" name="photo">
+            <br>
+
+            <button type="submit">Update User</button>
+          </form>
+        </script>
+        <div id="profile-container"></div>
+        <script id="profile-details-template" type="text/x-handlebars-template">
+          <h1 >Profile Details</h1>
+          <div class="profile-details-content">
+              <div class="header-profile">
+              <img src="{{ user.photo }}" alt="Profile Picture">
+            </div>
+            <div class="header-profile-details">
+              <div class="header-content">First Name: {{user.firstName}} </div>
+              <div class="header-content">Last Name: {{user.lastName}}</div>
+              <div class="header-content">Email: {{user.email}}</div>
+              <div class="header-content">Github Profile URL: {{user.github}}</div>
+            </div>
+            <div class="profile-actions">
+              Edit Profile
+              <button onclick="populateForm()" class="profile-edit">
+                <i class="fas fa-edit"></i>
+              </button>
+              Delete Profile 
+              <button class="profile-delete" data-id-user="{{ userId }}">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </div>
+        </script>
+        <div id="profile-details" class="center-content-header white-round-section"></div>
+        <script id="see-posts-template" type="text/x-handlebars-template">
+          <div class="section-title">
+            <h1>POSTS</h1>
+          </div>
+          <div class="section-content">
+            {{#if posts}}
+              {{#each posts}}
+                <div class="create-post-form" data-id-post="{{id}}">
+                  <button class="close-button" id="close-button">×</button>
+                  <form data-id-post="{{id}}">
+                    <label for="description">Description:</label>
+                    <textarea id="description" name="description">{{description}}</textarea>
+                    <br>
+                    <label for="photo">Photo:</label>
+                    <input type="file" id="photo" name="photo">
+                    <br>
+                    <label for="link">Link:</label>
+                    <input type="text" id="link" name="link" value="{{link}}">
+                    <br>
+                    <button type="submit">Update Post</button>
+                  </form>
+                </div>
+                <div class="post-card" data-id-post="{{id}}">
+                  <div class="post-header">
+                    <div class="post-actions">
+                      <button class="post-edit" data-id-post="{{id}}">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="post-delete" data-id-post="{{id}}">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                    <div class="post-header-content">
+                      <img class="post-user-photo" src="{{User.photo}}" alt="Profile Picture">
+                      <div class="post-user-info">
+                        <h2>{{User.firstName}} {{User.lastName}}</h2>
+                      </div> 
+                    </div>
+                  </div>
+                  <div class="post-body">
+                    <p>{{description}}</p>
+                    {{#if photo}}
+                      <img class="post-photo" src="{{photo}}" alt="Post Photo">
+                    {{/if}}
+                    {{#if link}}
+                      <a class="post-link" href="{{link}}">{{link}}</a>
+                    {{/if}}
+                  </div>
+                  <div class="post-footer">
+                    <div class="post-likes" data-id-post="{{id}}">
+                      <i class="fas fa-thumbs-up"></i>
+                      {{#if Likes.length}}
+                        <span>{{Likes.length}}</span>
+                      {{else}}
+                        <span>0</span>
+                      {{/if}}
+                    </div>
+                    <div class="post-comments">
+                      <i class="fas fa-comment"></i>
+                      {{#if Comments.length}}
+                        <span>{{Comments.length}}</span>
+                      {{else}}
+                        <span>0</span>
+                      {{/if}}
+                    </div>
+                  </div>
+                  <div class="comment-section">
+                    {{#if Comments.length}}
+                      <h3>Comments</h3>
+                      <ul>
+                        {{#each Comments}}
+                          <li>{{text}} - {{commenter.firstName}} {{commenter.lastName}}</li>
+                        {{/each}}
+                      </ul>
+                    {{else}}
+                      <p>No comments yet.</p>
+                    {{/if}}
+                  </div>
+                </div>
+              {{/each}}
+            {{else}}
+              <p>No posts available.</p>
+            {{/if}}
+          </div>
+        </script>  
+        <div id="see-posts" class="white-round-section"></div>
+      </div>
+    </div>
+  <script>
+    //global vars
+    function getPublicProfileUserId(){
+      const divWithId = document.getElementById('public-profile-user-id');
+      return divWithId.dataset.idUser;
+    }
+    const userId = getPublicProfileUserId();
+
+    async function getUser() {
+      try {
+        const response = await fetch(serverUrl + `/users/${userId}`, { 
+          method: 'GET', 
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const currentUser = await response.json();
+          console.log("user:", currentUser);
+          return currentUser.user;
+        } else if (response.status === 401) {
+          window.location.href = "../login";
+        } else {
+          throw new Error("Failure");
+        }
+      } catch (err) {
+        throw err; 
+      }
+    }
+
+    //populate profile-details template
+    Handlebars.registerHelper({
+        eq: (v1, v2) => v1 === v2,
+        ne: (v1, v2) => v1 !== v2,
+        lt: (v1, v2) => v1 < v2,
+        gt: (v1, v2) => v1 > v2,
+        lte: (v1, v2) => v1 <= v2,
+        gte: (v1, v2) => v1 >= v2,
+        and() {
+            return Array.prototype.every.call(arguments, Boolean);
+        },
+        or() {
+            return Array.prototype.slice.call(arguments, 0, -1).some(Boolean);
+        }
+    });
+  
+    async function populateProfileDetails(){
+      try{
+        const user = await getUser();
+        const profileDetailsTemplate = document.getElementById('profile-details-template').innerHTML;
+        const template = Handlebars.compile(profileDetailsTemplate);
+        const profileDetailsContainer = document.getElementById('profile-details');
+        user.photo = serverUrl + '/uploads/profilePictures/' + user.photo;
+        profileDetailsContainer.innerHTML = template({ user });
+        deleteUser();
+      } catch (err){
+        throw err;
+      }
+    }
+    
+    async function populateProfilePosts(){
+      try {
+        const user = await getUser();
+        const response = await fetch( serverUrl + `/posts/users/${user.id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include"
+        });
+        const postsJson = await response.json();
+        if( response.ok ){
+          console.log("posts: ", postsJson);
+          const profilePostsTemplate = document.getElementById('see-posts-template').innerHTML;
+          const template = Handlebars.compile(profilePostsTemplate);
+          const profilePostsContainer = document.getElementById('see-posts');
+          const posts = postsJson.posts;
+          posts.forEach( (post) => {
+            post.photo = serverUrl + '/uploads/postsImages/' + post.photo;
+            post.User.photo = serverUrl + '/uploads/profilePictures/' + post.User.photo;
+          });
+          profilePostsContainer.innerHTML = template({ posts });
+          postDeleteEditFunctionality();
+        } else {
+          throw new Error("Could not get posts");
+        }
+      } catch (err){
+        throw err;
+      }
+    }
+
+
+    //populate page
+    function populatePage(){
+      try{
+        populateProfileDetails();
+        populateProfilePosts();
+      } catch(err){
+        console.log("Error populating page: ",err);
+      }
+    }
+    populatePage();
+   
+    
+    //user functionality
+    //delete user
+    function deleteUser() {
+      const deleteButton = document.querySelector('.profile-delete');
+      deleteButton.addEventListener('click', async () => {
+        const user = await getUser();
+        var confirmed;
+        if(user)
+          confirmed = window.confirm('Are you sure you want to delete this user?');
+        if (confirmed) {
+          try {
+            const response = await fetch(serverUrl + `/users/admin/${userId}`, {
+              method: 'DELETE',
+              credentials: "include"
+            });
+
+            if (response.ok) {
+              document.getElementById("changes-succes").style.display = "block";
+              sleep(2);
+              window.location.href = "../adminDashboard";
+            } else {
+              const responseJson = await response.json();
+              window.alert(responseJson.error);
+            }
+          } catch (error) {
+            console.log(error);
+          }
+        }
+      });
+    }
+
+
+    //close button for edit user form
+    function closeButton(){
+      const closeButton = document.getElementById('close-button');
+
+      closeButton.addEventListener('click', () => {
+        const profileContainer = document.getElementById("profile-container");
+        profileContainer.style.display = 'none';
+      });      
+    }
+
+    //populate edit user form
+    async function populateForm(){
+      const user = await getUser();
+      const profileContainer = document.getElementById('profile-container');
+      const profileTemplate = document.getElementById('profile-template').innerHTML;
+      const template = Handlebars.compile(profileTemplate);
+      profileContainer.innerHTML = template({ user });
+      closeButton();
+      sendForm();
+    }
+
+    //edit user form
+    function sendForm(){
+      const formContainer = document.getElementById("profile-container");
+      formContainer.style.display="block";
+      const form = document.getElementById("edit-profile-form");
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const fileInput = document.getElementById("photo");
+        const file = fileInput.files[0];
+        if(file){
+          console.log("exista file");
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onloadend = async () => {
+            const base64String = reader.result;
+            const formData = new FormData(form);
+            formData.set("photo", base64String);
+            const formDataObject = Object.fromEntries(formData.entries());
+            console.log("fdobj", formDataObject);
+            const formDataJsonString = JSON.stringify(formDataObject);
+            console.log("fdjson", formDataJsonString);
+            try {
+              const response = await fetch(serverUrl + `/users/admin/${userId}`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: formDataJsonString,
+                credentials: "include"
+              });
+              if (response.ok) {
+                const jsonResponse = await response.json();
+                console.log(jsonResponse);
+                formContainer.style.display="none";
+                document.getElementById("changes-succes").style.display = "block";
+                populateProfileDetails();
+              } else {
+                const errorResponse = await response.text();
+                alert(errorResponse);
+              }
+            } catch (error) {
+              console.error(error);
+            }
+          };
+        } else{
+          console.log("nu exista file");
+          try {
+              const formData = new FormData(form);
+              formData.set("photo", "");
+              const formDataObject = Object.fromEntries(formData.entries());
+              console.log("fdobj", formDataObject);
+              const formDataJsonString = JSON.stringify(formDataObject);
+              console.log("formdatajsonstring:",formDataJsonString);
+              const response = await fetch(serverUrl + `/users/admin/${userId}`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: formDataJsonString,
+                credentials: "include"
+              });
+              if (response.ok) {
+                const jsonResponse = await response.json();
+                console.log(jsonResponse);
+                formContainer.style.display="none";
+                document.getElementById("changes-succes").style.display = "block";
+                populateProfileDetails();
+              } else {
+                const errorResponse = await response.text();
+                alert(errorResponse);
+              }
+          } catch (error) {
+            console.error(error);
+          }
+        }
+      });
+    }
+  
+    
+    //posts functionality
+    function deletePost(){
+      const deleteButtons = document.querySelectorAll('.post-delete');
+        deleteButtons.forEach((deleteButton) => {
+        deleteButton.addEventListener('click', async (event) => {
+          const user = await getUser();
+          const postId = deleteButton.dataset.idPost;
+          var confirmDelete;
+          if(user)
+            confirmDelete = confirm("Are you sure you want to delete this post?");
+          if (confirmDelete) {
+            try{
+              const response = await fetch(serverUrl + `/posts/admin/${postId}`, {
+                method: 'DELETE',
+                credentials: "include"
+              })
+              if (response.status === 200) {
+                document.getElementById("changes-succes").style.display = "block";
+                const postForm = document.querySelector(`.create-post-form[data-id-post="${postId}"]`);
+                postForm.remove();
+                const postCard = document.querySelector(`.post-card[data-id-post="${postId}"]`);
+                postCard.remove();
+              } else if (response.status === 401){
+                const responseJson = await response.json();
+                alert(responseJson.error);
+              } 
+            } catch(error) {
+              console.log(error);
+            };
+          }
+        });
+      });
+    }
+
+    function editPostForm(){
+      const editPostButtons = document.querySelectorAll('.post-edit');
+      editPostButtons.forEach((editPostButton) => {
+        editPostButton.addEventListener('click', async () => {
+          const user = await getUser();
+          const postId = editPostButton.dataset.idPost;
+          //console.log("postId: ", postId);
+          const createPostForm = document.querySelector(`div[data-id-post="${postId}"].create-post-form`);
+          // console.log("div ul cu create: ", createPostForm);
+          const allCreatePostForms = document.querySelectorAll('.create-post-form');
+          allCreatePostForms.forEach((form) => {
+            if (form !== createPostForm) {
+              form.style.display = 'none';
+            }
+          });
+          createPostForm.style.display = 'block';
+          const closeButton = createPostForm.querySelector('#close-button');
+          const closeForm = () => {
+            createPostForm.style.display = 'none';
+            closeButton.removeEventListener('click', closeForm);
+          }
+          closeButton.addEventListener('click', closeForm);
+        });
+      })
+    }
+
+    function editPostRequest() {
+      const forms = document.querySelectorAll('form');
+
+      forms.forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const postId = form.dataset.idPost;
+
+          const fileInput = form.querySelector('#photo');
+          let base64String = '';
+          if (fileInput && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            await new Promise((resolve) => {
+              reader.onloadend = () => {
+                base64String = reader.result;
+                resolve();
+              };
+            });
+          }
+
+          const formData = new FormData(form);
+          formData.set('photo', base64String);
+          const formDataObject = Object.fromEntries(formData.entries());
+          const formDataJsonString = JSON.stringify(formDataObject);
+
+          try {
+            console.log("formdatajSONSTRING", formDataJsonString);
+            
+            const response = await fetch(serverUrl + `/posts/admin/${postId}`, {
+              method: 'PUT',
+              body: formDataJsonString,
+              credentials: "include",
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if(response.ok){
+              document.getElementById("changes-succes").style.display = "block";
+              const updatedPostResponse = await fetch(serverUrl + `/posts/${postId}`,{
+                method: 'GET',
+                credentials:"include"
+              });
+
+              const dataJson = await updatedPostResponse.json();
+              console.log("postjson:", dataJson);
+              const data = dataJson.post;
+
+              const postCard = document.querySelector(`[data-id-post="${postId}"]`).nextElementSibling;
+              const postBody = postCard.querySelector('.post-body');
+              const postFooter = postCard.querySelector('.post-footer');
+              postBody.querySelector('p').textContent = data.description;
+
+              if (data.photo) {
+                const postPhoto = postBody.querySelector('.post-photo');
+                postPhoto.src = serverUrl + '/uploads/postsImages/' + data.photo;
+              } else {
+                const postPhoto = postBody.querySelector('.post-photo');
+                postPhoto.src = '';
+              }
+
+              if (data.link) {
+                const postLink = postBody.querySelector('.post-link');
+                postLink.textContent = data.link;
+                postLink.href = data.link;
+              } else {
+                const postLink = postBody.querySelector('.post-link');
+                postLink.textContent = '';
+                postLink.href = '';
+              }
+
+              const createPostForm = document.querySelector(`div[data-id-post="${postId}"].create-post-form`);
+              createPostForm.style.display = 'none';
+            } else if(response.status ===401){
+              const responseJson = await response.json();
+              alert(responseJson.error);
+            }
+          } catch (error) {
+            console.log(error);
+          }
+        });
+      });
+    }
+
+    function postDeleteEditFunctionality(){
+      deletePost();
+      editPostForm();
+      editPostRequest();
+    }
+  
+    //close custom notification
+    var customCloseButton = document.querySelector('.custom-close-btn');
+    var notificationBox = document.querySelector('.custom-notification');
+
+    customCloseButton.addEventListener('click', function() {
+      notificationBox.style.display = 'none';
+    });
+
+    //sleep function
+    function sleep(seconds) {
+      return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+    }
+  </script>
+  </body>
+</html>

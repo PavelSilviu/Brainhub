@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Brainhub Social Media App</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/css/home.css">
+    <script src="/fontawesome/js/all.min.js"></script>
+    <script src="/js/global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handlebars/dist/handlebars.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <body>
+    <div class="unsupported-devices">
+      <p>
+        We are sorry but we do not support your device. Please upgrade to a
+        newer phone to view this site content.
+      </p>
+    </div>
+    <div id="navbar">
+      <div class="navbar-left">
+        <a class="logo" href="/home"><img src="/images/logo black color.png" alt="logo black color"></a>
+      </div>
+      <div class="navbar-center">
+        <div id="search-container">
+          <input type="text" id="search-input" placeholder="Search...">
+          <button id="clear-button" onclick="clearSearch()">Clear</button>
+        </div>
+      </div>
+      <div class="navbar-right">
+        <div class="notifications-icon follow-requests-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="notifications-icon notification-button">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge">0</span>
+        </div>
+        <div class="profile-picture">
+          <a href="/profile"><img src="#" alt="Profile Picture" id="profile-picture-img"></a>
+        </div>
+      </div>
+    </div>
+    <div class="mobile-menu">
+      <div class="notifications-icon" id="home-icon">
+        <i class="fas fa-home"></i>
+      </div>
+      <div class="notifications-icon" id="search-icon">
+        <i class="fas fa-search"></i>
+      </div>
+      <div id="create-post-icon">
+        <div id="fa-plus-container">
+          <i class="fas fa-plus"></i>
+        </div>
+      </div>
+      <div class="notifications-icon follow-requests-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="notifications-icon notification-button">
+        <i class="fas fa-bell"></i>
+        <span class="notification-badge">0</span>
+      </div>
+      <div class="profile-picture">
+        <a href="/profile"><img src="http://localhost:5000/uploads/profilePictures/1686698387910-45463347.png" alt="Profile Picture" id="profile-picture-img"></a>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="left-sidebar">
+        <div class="left-sidebar-section">
+          <div class="left-sidebar-section-title">
+            <h3>Home</h3>
+          </div>
+          <div class="left-sidebar-section-body">
+            <ul>
+              <a href="edit-posts/">
+                <li>Manage My Posts</li>
+              </a>
+              <a href="profile/">
+                <li>Manage My Profile</li>
+              </a>
+              <a href="#" id="logout-link">
+                <li>Logout</li>
+              </a>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="center-content" id="post-container">
+        <div class="post-card create-post-button">
+          Let's post something amazing! 📷
+        </div>
+        <div class="create-post-form" id="create-post-form-container">
+            <button class="close-button" id="close-button">×</button>
+            <form id="create-post-form">
+              <label for="description">Description:</label>
+              <textarea id="description" name="description" required></textarea>
+              <br>
+              <label for="photo">Photo:</label>
+              <input type="file" name="photo" id="photo" accept="image/png" required>
+              <input type="text" id="dimension-error" readonly>
+              <br>
+              <label for="link">Link:</label>
+              <input type="text" id="link" name="link" required>
+              <br>
+              <button type="submit">Create</button>
+              <button id="github-repos-button" class="github-button"  type="button" onclick="fetchUserRepos()">Create Using Github</button>
+            </form>
+        </div>
+        <div class="create-post-git" id="create-post-container-git">
+          <button class="close-button" id="close-button-git" onclick="closeButtonGit()">×</button>
+          <p>Please choose the repository that you would like to use to create the post:</p>
+          <select id="repo-dropdown"></select>
+          <button id="creat-git-post-button" class="github-button" onclick="chooseSelectedRepo()">Submit</button>
+        </div>
+        <div id="select-post-options">
+          <button class="close-button" id="close-button-options" onclick="closeButtonOptions()">×</button>
+          <p>Please select post options to include.</p>
+          <div id="options-container"></div>
+          <button onclick="goBackToSelectRepo()" class="github-button" >Go back</button>
+          <button id="populate-form" onclick="populateForm()" class="github-button" >Choose options</button> 
+        </div>
+        <script id="post-template" type="text/x-handlebars-template">
+          {{#if posts.length}}
+            {{#each posts}}
+            <div class="post-card">
+              <div class="post-header">
+                <a href="/public-profile/{{User.id}}"><img class="post-user-photo" src="{{User.photo}}" alt="Profile Picture"></a>
+                <a href="/public-profile/{{User.id}}">
+                  <div class="post-user-info">
+                    <h2>{{User.firstName}} {{User.lastName}}</h2>
+                  </div>
+                </a>
+              </div>
+              <div class="post-body">
+                <p>{{description}}</p>
+                {{#if photo}}
+                  <img class="post-photo" src="{{photo}}" alt="Post Photo">
+                {{/if}}
+                {{#if link}}
+                  <a class="post-link" href="{{link}}">{{link}}</a>
+                {{/if}}
+              </div>
+              <div class="post-footer">
+                <div class="post-likes" data-id-post="{{id}}" data-post-user="{{User.id}}">
+                  <i class="fas fa-thumbs-up"></i>
+                  {{#if Likes.length}}
+                    <span>{{Likes.length}}</span>
+                  {{else}}
+                    <span>0</span>
+                  {{/if}}
+                </div>
+                <div class="post-comments" data-id-post="{{id}}" data-post-user="{{User.id}}">
+                  <i class="fas fa-comment"></i>
+                  {{#if Comments.length}}
+                    <span>{{Comments.length}}</span>
+                  {{else}}
+                    <span>0</span>
+                  {{/if}}
+                </div>
+              </div>
+              <div class="comment-section">
+                {{#if Comments.length}}
+                  <h3>Comments</h3>
+                  <ul>
+                    {{#each Comments}}
+                      <li>{{text}} - {{commenter.firstName}} {{commenter.lastName}} </li>
+                    {{/each}}
+                  </ul>
+                  <form method="POST" class="comment-form" data-id-post="{{id}}" data-post-user="{{User.id}}">
+                    <div class="form-group">
+                      <textarea placeholder="Write a comment..." class="form-control" name="text" rows="3" required></textarea>
+                      <button type="submit" class="btn btn-primary">Comment</button>
+                    </div>
+                  </form>
+                {{else}}
+                  <form  method="POST" class="comment-form" data-id-post="{{id}}" data-post-user="{{User.id}}">
+                    <div class="form-group">
+                      <textarea placeholder="Write a comment..." class="form-control" name="text" rows="3" required></textarea>
+                      <button type="submit" class="btn btn-primary">Comment</button>
+                    </div>
+                  </form>
+                {{/if}}
+              </div>
+            </div>
+            {{/each}}
+          {{/if}}
+        </script>
+        <div id="posts-container"></div>
+      </div>
+      <div class="right-sidebar">
+        <div class="right-sidebar-section" id="last-follow-requests">
+          <div class="right-sidebar-section-title">
+            <h3>Follow Requests</h3>
+          </div>
+          <div class="right-sidebar-section-body">
+            <ul>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="right-sidebar-section" id="people-in-trend">
+          <div class="right-sidebar-section-title">
+            <h3>Most Popular Users</h3>
+          </div>
+          <div class="right-sidebar-section-body">
+            <ul>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  <script>
+    //global vars
+    const socket = io("http://localhost:5000", {
+      withCredentials: true,
+      extraHeaders: {
+        "Access-Control-Allow-Origin": "http://localhost:3000"
+      }
+    });
+    async function getCurrentUser() {
+      try {
+        const response = await fetch(serverUrl + '/users/current', { 
+          method: 'GET', 
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const currentUser = await response.json();
+          console.log("currentUser:", currentUser);
+          return currentUser.user;
+        } else if (response.status === 401) {
+          window.location.href = "../login";
+        } else {
+          throw new Error("Failure");
+        }
+      } catch (err) {
+        throw err; 
+      }
+    }
+    
+    //currentUser profile pic
+    async function displayCurrentUserProfilePicture(){
+      const currentUserProfilePictureElement = document.getElementById('profile-picture-img');
+      try{
+        const currentUser = await getCurrentUser();
+        currentUserProfilePictureElement.src = serverUrl + '/uploads/profilePictures/' + currentUser.photo ;
+      } catch (err){
+        console.log(err);
+      }
+    }
+    displayCurrentUserProfilePicture();
+
+    //currentUser feed
+    async function getCurrentUserFeed() {
+      try {
+        const currentUser = await getCurrentUser();
+        const response = await fetch(serverUrl + `/posts/users/${ currentUser.id }?filter=following&offset=0&limit=10`, {
+          method: 'GET',
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+        var postsJson = await response.json();
+        if( response.ok ){
+          console.log("posts: ",postsJson);
+          posts = postsJson.posts;
+          const postTemplate = document.getElementById('post-template').innerHTML;
+          const template = Handlebars.compile(postTemplate);
+          const postContainer = document.getElementById('posts-container');
+          posts.forEach( (post) => {
+            post.photo = serverUrl + '/uploads/postsImages/' + post.photo;
+            post.User.photo = serverUrl + '/uploads/profilePictures/' + post.User.photo;
+          });
+          postContainer.innerHTML = template({ posts });
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+
+    //pop-up create post
+    const createPostButton = document.querySelector('.create-post-button');
+    const createPostIcon = document.getElementById('fa-plus-container');
+    const createPostForm = document.querySelector('.create-post-form');
+
+    createPostButton.addEventListener('click', () => {
+      createPostForm.style.display = 'block';
+    });
+    createPostIcon.addEventListener('click', () => {
+      createPostForm.style.display = 'block';
+    });
+    const closeButton = document.getElementById('close-button');
+
+    closeButton.addEventListener('click', () => {
+      createPostForm.style.display = 'none';
+    });
+
+    function setupCommentSection(postElement) {
+      const commentIcons = postElement.querySelectorAll('.post-comments');
+      const commentSections = postElement.querySelectorAll('.comment-section');
+
+      commentIcons.forEach((commentIcon, index) =>{
+        commentSections[index].style.display = 'none';
+      })
+
+      commentIcons.forEach((commentIcon, index) => {
+        commentIcon.addEventListener('click', () => {
+          commentSections[index].style.display = commentSections[index].style.display === 'none' ? 'block' : 'none';
+        });
+      });
+    }
+    
+
+    async function activateLikeButton(postElement) {
+      const likeButton = postElement.querySelector('.post-likes');
+      likeButton.addEventListener('click', async () => {
+        try {
+          const likesSpan = likeButton.querySelector('span');
+          const postId = likeButton.dataset.idPost;
+          console.log("post id: ", postId);
+          const postUserId = likeButton.dataset.postUser;
+          const user = await getCurrentUser();
+
+          const response = await fetch(serverUrl + '/posts/' + postId + '/likes', {
+            method: 'POST',
+            credentials: "include"
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to like the post.');
+          }
+
+          const likesCountJson = await fetch(serverUrl + `/posts/${postId}/likes/count`, {
+            method: 'GET',
+            credentials: "include"            
+          });
+          const likesCount  = await likesCountJson.json();
+          likesSpan.textContent = likesCount.count;
+
+          try {
+            await fetch(serverUrl + '/users/notifications/like/' + postId, { 
+              method: 'POST',
+              credentials: "include"
+            });
+          } catch (error) {
+            console.error(error);
+          }
+
+          socket.emit('notification', { "userId": parseInt(postUserId), "message": "Received like from: " + user.firstName + " " + user.lastName });
+          console.log("trimis notificare la room: ", postUserId);
+
+          //create like action
+          try {
+            const currentDate = new Date();
+            const isoDate = currentDate.toISOString();
+            const action = {
+              createdAt: isoDate,
+              ActionId: likeActionId,
+              UserId: user.id
+            };
+            console.log("action:", action);
+            console.log("string action:", JSON.stringify(action));
+            const response = await fetch(serverUrl + "/users/actions/", { 
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(action),
+              credentials: "include",
+            });
+            if(response.ok){
+              console.log("like action created successfully");
+            }
+          } catch (error) {
+            console.error(error);
+          }
+
+          //update userlevel
+          try {
+            const entry = {
+
+            }
+            const response = await fetch(serverUrl + `/users/${user.id}/levels/`, { 
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: "include",
+            });
+            if(response.ok){
+              console.log("userlevel updated successfully");
+            }
+          } catch (error) {
+            console.error(error);
+          }
+
+          
+        } catch (error) {
+          console.error(error);
+        }
+      });
+    }
+
+
+    // Function to add comment functionality to a single post
+    function addCommentFunctionality(post) {
+      const commentForm = post.querySelector('.comment-form');
+      // console.log("sunt aiciiii in add comment funct", post)
+      commentForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const commentText = commentForm.elements.text.value;
+        const postId = commentForm.dataset.idPost;
+        const data = {
+          content: commentText
+        }
+        const currentUser = await getCurrentUser();
+        const postUserId = commentForm.dataset.postUser;
+
+        try {
+          const response = await fetch( serverUrl + `/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+            credentials: "include"
+          });
+          if (response.ok) {
+            try{
+              await fetch(serverUrl + '/users/notifications/comment/' + postId, {
+                method: 'POST',
+                credentials: "include"
+              } )
+            } catch(error) {
+              console.error(error)
+            }
+            socket.emit('notification', { "userId": parseInt(postUserId), "message": "Received comment from: " + currentUser.firstName + " " + currentUser.lastName });
+            
+            //create comment action
+              try {
+                const currentDate = new Date();
+                const isoDate = currentDate.toISOString();
+                const action = {
+                  createdAt: isoDate,
+                  ActionId: commentActionId,
+                  UserId: currentUser.id
+                };
+                console.log("action:", action);
+                console.log("string action:", JSON.stringify(action));
+                const response = await fetch(serverUrl + "/users/actions/", { 
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(action),
+                  credentials: "include",
+                });
+                if(response.ok){
+                  console.log("comment action created successfully");
+                }
+              } catch (error) {
+                console.error(error);
+              }
+
+            //update userlevel
+            try {
+              const entry = {
+
+              }
+              const response = await fetch(serverUrl + `/users/${user.id}/levels/`, { 
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: "include",
+              });
+              if(response.ok){
+                console.log("userlevel updated successfully");
+              }
+            } catch (error) {
+              console.error(error);
+            }
+
+
+            commentForm.elements.text.value = '';
+            let commentList = commentForm.parentElement.querySelector('ul');
+            if (!commentList) {
+              commentList = document.createElement('ul');
+              commentForm.parentElement.insertBefore(commentList, commentForm);
+            }
+            const newCommentElement = document.createElement('li');
+            newCommentElement.innerHTML = `${commentText} - ${currentUser.firstName} ${currentUser.lastName} (now)`;
+            commentList.appendChild(newCommentElement);
+            const commentCount = commentForm.closest('.post-card').querySelector('.post-comments span');
+            const currentCount = parseInt(commentCount.textContent);
+            commentCount.textContent = currentCount + 1;
+          } else {
+            console.error(`Server returned ${response.status} status`);
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      });
+    }
+
+    // Function to add comment functionality to all posts on the page
+    async function addCommentAndLikeFunctionalityToAllPosts() {
+      await getCurrentUserFeed();
+      const postElements = document.querySelectorAll('.post-card:not([class*=" "])');
+      postElements.forEach((post) => {
+        addCommentFunctionality(post);
+        setupCommentSection(post);
+        activateLikeButton(post);
+      });
+    }
+
+    // Call the function to add comment functionality to all existing posts
+    addCommentAndLikeFunctionalityToAllPosts();
+
+    function createPostCard(post) {
+      let postCard = `<div class="post-card">
+        <div class="post-header">
+          <img class="post-user-photo" src="${serverUrl}/uploads/profilePictures/${post.User.photo}" alt="Profile Picture">
+          <div class="post-user-info">
+            <h2>${post.User.firstName} ${post.User.lastName}</h2>
+          </div>
+        </div>
+        <div class="post-body">
+          <p>${post.description}</p>
+          ${post.photo ? `<img class="post-photo" src="${serverUrl}/uploads/postsImages/${post.photo}" alt="Post Photo">` : ''}
+          ${post.link ? `<a class="post-link" href="${post.link}">${post.link}</a>` : ''}
+        </div>
+        <div class="post-footer">
+          <div class="post-likes" data-id-post="${post.id}">
+            <i class="fas fa-thumbs-up"></i>
+            ${post.Likes && post.Likes.length > 0 ? `<span>${post.Likes.length}</span>` : `<span>0</span>`}
+          </div>
+          <div class="post-comments" data-id-post="${post.id}">
+            <i class="fas fa-comment"></i>
+            ${post.Comments && post.Comments.length > 0 ? `<span>${post.Comments.length}</span>` : `<span>0</span>`}
+          </div>
+        </div>
+        <div class="comment-section">
+          <form method="POST" class="comment-form" data-id-post="${post.id}">
+            <div class="form-group">
+              <textarea placeholder="Write a comment..." class="form-control"  name="text" rows="3" required></textarea>
+              <button type="submit" class="btn btn-primary">Comment</button>
+            </div>
+          </form>
+        </div>
+      </div>`;
+      
+      const div = document.createElement('div');
+      div.innerHTML = postCard;
+
+      return div.firstElementChild;
+    }
+
+    // create posts async:
+    const form = document.querySelector('#create-post-form');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const user = await getCurrentUser();
+      const fileInput = form.querySelector('#photo');
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = async () => {
+        const base64String = reader.result;
+        const formData = new FormData(form);
+        formData.set('photo', base64String); 
+
+        const formDataObject = Object.fromEntries(formData.entries());
+        const formDataJsonString = JSON.stringify(formDataObject);
+
+        try {
+          const response = await fetch(serverUrl + '/posts/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: formDataJsonString,
+            credentials: "include"
+          });
+          if (response.status === 201) {
+            const location = response.headers.get('Location');
+            const postResponse = await fetch(serverUrl + location, {
+              method: 'GET',
+              credentials: "include"
+            });
+            if (postResponse.ok) {
+              const post = await postResponse.json();
+              const postList = document.querySelector('.center-content');
+              console.log("post:",post);
+              const postCard = createPostCard(post.post);
+              postList.insertBefore(postCard, postList.children[1]);
+
+              form.reset();
+              document.querySelector('#create-post-form-container').style.display = 'none';
+
+              setupCommentSection(postCard);
+              addCommentFunctionality(postCard);
+              activateLikeButton(postCard);
+
+              //create post action
+              try {
+                const currentDate = new Date();
+                const isoDate = currentDate.toISOString();
+                const action = {
+                  createdAt: isoDate,
+                  ActionId: createPostActionId,
+                  UserId: user.id
+                };
+                console.log("action:", action);
+                console.log("string action:", JSON.stringify(action));
+                const response = await fetch(serverUrl + "/users/actions/", { 
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(action),
+                  credentials: "include",
+                });
+                if(response.ok){
+                  console.log("create post action created successfully");
+                }
+              } catch (error) {
+                console.error(error);
+              }
+
+              
+              //update userlevel
+              try {
+                const entry = {
+
+                }
+                const response = await fetch(serverUrl + `/users/${user.id}/levels/`, { 
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  credentials: "include",
+                });
+                if(response.ok){
+                  console.log("userlevel updated successfully");
+                }
+              } catch (error) {
+                console.error(error);
+              }
+
+    
+            } else {
+              console.error('Error getting post:', postResponse.status);
+            }
+          } else if (response.status === 401) {
+            window.location.href = "../login";
+          } else {
+            console.error('Error posting data:', response.status);
+          }
+        } catch (error) {
+          console.error('Error posting data:', error);
+        }
+      };
+    });
+
+
+
+    // new user pop-up
+    const newUserPopupContainer = document.querySelector('.new-user-popup-container');
+    const newUserPopupBox = document.querySelector('.new-user-popup-box');
+    const newUserPopupCloseBtn = document.querySelector('.new-user-popup-close-btn');
+    const newUserCardsContainer = document.querySelector('.new-user-cards');
+
+    if (newUserPopupCloseBtn) {
+      newUserPopupCloseBtn.addEventListener('click', closeNewUserPopup);
+    }
+
+    function openNewUserPopup() {
+      newUserPopupContainer.style.display = 'flex';
+    }
+
+    function closeNewUserPopup() {
+      newUserPopupContainer.style.display = 'none';
+    }
+
+    // follow button
+    const followButtons = document.querySelectorAll(".new-user-card-follow-btn");
+    followButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const userId = button.dataset.userId;
+
+        fetch(`/follow/${userId}`, { method: "POST" })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+            button.classList.add("following");
+            button.innerHTML = '<i class="fas fa-check"></i> Request sent';
+          })
+          .catch((err) => {
+            console.error(err);
+          });
+      });
+    });
+
+
+    // follow requests
+    const navbarRightStyle =window.getComputedStyle(document.querySelector('.navbar-right')).getPropertyValue('display');
+    const navbarIconArray = document.querySelectorAll('.follow-requests-icon');
+    var navbarIcon;
+    if(navbarRightStyle==='flex'){
+      navbarIcon = navbarIconArray[0];
+    } else if(navbarRightStyle==='none'){
+      navbarIcon = navbarIconArray[1];
+    }
+
+    navbarIcon.addEventListener('click', async () => {
+      // console.log("click navbar follow requests");
+      const containerExistence = document.querySelector('.follow-requests-container');
+      if (containerExistence) {
+        containerExistence.remove();
+        return;
+      }
+
+      const response = await fetch(serverUrl + '/users/follow-requests', {
+        method: 'GET',
+        headers: {
+            "Content-Type": "application/json",
+          },
+        credentials: "include",
+      });
+      if (response.status === 401) {
+        window.location.href = "../login";
+      }
+      const followRequests = await response.json();
+
+      // console.log("respone follow request:", followRequests);
+      const followRequestsContainer = document.createElement('div');
+      followRequestsContainer.classList.add('follow-requests-container');
+
+      if (followRequests.followers.length === 0) {
+        const messageElement = document.createElement('p');
+        messageElement.textContent = 'No follow requests at this time.';
+        followRequestsContainer.appendChild(messageElement);
+      } else {
+        console.log("follow req:", followRequests);
+        followRequests.followers.forEach(followRequest => {
+          const followRequestDiv = document.createElement('div');
+          followRequestDiv.classList.add('follow-request');
+
+          const followRequestDivFirst = document.createElement('div');
+          followRequestDivFirst.classList.add('follow-request-first');
+
+          const followRequestDivSecond = document.createElement('div');
+          followRequestDivSecond.classList.add('follow-request-second');
+
+          const photoElement = document.createElement('img');
+          const photo = followRequest["followers.photo"];
+          photoElement.src = serverUrl + '/uploads/profilePictures/' + photo;
+          
+          const username = followRequest["followers.firstName"] + ' ' + followRequest["followers.lastName"];
+          const usernameElement = document.createElement('p');
+
+          const userProfileLinkUsername = document.createElement('a');
+          userProfileLinkUsername.href = `/public-profile/${followRequest["followers.id"]}`;
+          userProfileLinkUsername.textContent = username;
+          usernameElement.appendChild(userProfileLinkUsername);
+
+          const userProfileLinkPhoto = document.createElement('a');
+          userProfileLinkPhoto.href = `/public-profile/${followRequest["followers.id"]}`;
+          userProfileLinkPhoto.appendChild(photoElement);
+
+          followRequestDivFirst.appendChild(userProfileLinkPhoto);
+
+          const acceptButton = document.createElement('button');
+          acceptButton.textContent = 'Accept';
+          const rejectButton = document.createElement('button');
+          rejectButton.textContent = 'Reject';
+
+          acceptButton.addEventListener('click', async () => {
+            await fetch(`${serverUrl}/users/follow-requests/accept/${followRequest.id}`, {
+              method: 'PUT',
+              headers: {
+                "Content-Type" : "application/json"
+              },
+              credentials: "include"
+            });
+            followRequestDiv.remove();
+          });
+          rejectButton.addEventListener('click', async () => {
+            await fetch(`${serverUrl}/users/follow-requests/reject/${followRequest.id}`, { 
+              method: 'PUT',
+              headers: {
+                "Content-Type" : "application/json"
+              },
+              credentials: "include"
+            });
+            followRequestDiv.remove();
+          });
+
+          const followRequestDivSecondButtons = document.createElement('div');
+          followRequestDivSecondButtons.classList.add('follow-request-second-buttons');
+
+          followRequestDivSecondButtons.appendChild(acceptButton);
+          followRequestDivSecondButtons.appendChild(rejectButton);
+          followRequestDivSecond.appendChild(usernameElement);
+          followRequestDivSecond.appendChild(followRequestDivSecondButtons);
+          followRequestDiv.appendChild(followRequestDivFirst);
+          followRequestDiv.appendChild(followRequestDivSecond);
+          followRequestsContainer.appendChild(followRequestDiv);
+        });
+      }
+      document.body.appendChild(followRequestsContainer);
+
+    });
+
+    document.addEventListener('click', event => {
+      if (event.target !== navbarIcon && !navbarIcon.contains(event.target)) {
+        const containerExistence = document.querySelector('.follow-requests-container');
+        if (containerExistence) {
+          containerExistence.remove();
+        }
+      }
+    });
+
+    //follow requests right sidebar
+    const rightSidebarSection = document.querySelector('#last-follow-requests');
+
+    async function populateFollowRequests() {
+      const response = await fetch(serverUrl + '/users/follow-requests', {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (response.status === 401) {
+        window.location.href = "../login";
+        return;
+      }
+
+      const followRequests = await response.json();
+
+      const followRequestsList = document.createElement('ul');
+      followRequestsList.classList.add('follow-requests-list');
+
+      if (followRequests.followers.length === 0) {
+        const noRequestsElement = document.createElement('li');
+        noRequestsElement.textContent = 'No follow requests at this time.';
+        followRequestsList.appendChild(noRequestsElement);
+      } else {
+        followRequests.followers.forEach(followRequest => {
+          const username = followRequest["followers.firstName"] + ' ' + followRequest["followers.lastName"];
+          const photo = followRequest["followers.photo"];
+          const userId = followRequest["followers.id"];
+
+          const followRequestElement = document.createElement('li');
+          followRequestElement.classList.add('follow-request');
+
+          const followRequestFirst = document.createElement('div');
+          followRequestFirst.classList.add('follow-request-first');
+
+          const followRequestSecond = document.createElement('div');
+          followRequestSecond.classList.add('follow-request-second');
+
+          const profilePicture = document.createElement('img');
+          profilePicture.src = serverUrl + '/uploads/profilePictures/' + photo;
+
+          const usernameElement = document.createElement('p');
+          const userProfileLink = document.createElement('a');
+          userProfileLink.href = `/public-profile/${userId}`;
+          userProfileLink.textContent = username;
+
+          const acceptButton = document.createElement('button');
+          acceptButton.textContent = 'Accept';
+          acceptButton.addEventListener('click', async () => {
+            await handleFollowRequestAction(followRequest.id, 'accept');
+            followRequestElement.remove();
+            if (followRequestsList.childElementCount === 0) {
+              const noRequestsElement = document.createElement('li');
+              noRequestsElement.textContent = 'No follow requests at this time.';
+              followRequestsList.appendChild(noRequestsElement);
+            }
+          });
+
+          const rejectButton = document.createElement('button');
+          rejectButton.textContent = 'Reject';
+          rejectButton.addEventListener('click', async () => {
+            await handleFollowRequestAction(followRequest.id, 'reject');
+            followRequestElement.remove();
+            if (followRequestsList.childElementCount === 0) {
+              const noRequestsElement = document.createElement('li');
+              noRequestsElement.textContent = 'No follow requests at this time.';
+              followRequestsList.appendChild(noRequestsElement);
+            }
+          });
+
+          followRequestFirst.appendChild(profilePicture);
+          followRequestSecond.appendChild(userProfileLink);
+          followRequestSecond.appendChild(acceptButton);
+          followRequestSecond.appendChild(rejectButton);
+
+          followRequestElement.appendChild(followRequestFirst);
+          followRequestElement.appendChild(followRequestSecond);
+          followRequestsList.appendChild(followRequestElement);
+        });
+      }
+
+      const rightSidebarSectionBody = rightSidebarSection.querySelector('.right-sidebar-section-body');
+      rightSidebarSectionBody.innerHTML = '';
+      rightSidebarSectionBody.appendChild(followRequestsList);
+    }
+
+    async function handleFollowRequestAction(requestId, action) {
+      const response = await fetch(`${serverUrl}/users/follow-requests/${action}/${requestId}`, {
+        method: 'PUT',
+        headers: {
+          "Content-Type" : "application/json"
+        },
+        credentials: "include"
+      });
+
+      if (response.status === 401) {
+        window.location.href = "../login";
+      }
+    }
+    populateFollowRequests();
+
+
+    async function populatePeopleInTrend() {
+      const userList = document.querySelector('#people-in-trend ul');
+
+      try {
+        const response = await fetch(serverUrl + '/users', {
+          method: "GET",
+          credentials: "include"
+        });
+        const usersJson = await response.json();
+        console.log("popular users:",usersJson);
+        const users = usersJson.response;
+        users.forEach(user => {
+          const listItem = document.createElement('li');
+          const link = document.createElement('a');
+          const profilePhoto = document.createElement('img');
+
+          link.href = `/public-profile/${user.id}`;
+          link.textContent = `${user.firstName} ${user.lastName}`;
+
+          profilePhoto.src = serverUrl + "/uploads/profilePictures/" + user.photo;
+          profilePhoto.alt = `${user.firstName}'s Profile Photo`;
+
+          listItem.appendChild(profilePhoto);
+          listItem.appendChild(link);
+
+          userList.appendChild(listItem);
+        });
+
+        userList.scrollIntoView({ behavior: 'smooth' });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    populatePeopleInTrend();
+
+    //clear search
+    function clearSearch() {
+      document.getElementById('search-input').value = ''; 
+    }
+
+
+    //search bar
+    const searchContainer = document.getElementById('search-container');
+    const searchInput = document.querySelector('#search-container input');
+    let searchResultsContainer = document.querySelector('#search-results-container');
+
+    if (!searchResultsContainer) {
+      searchResultsContainer = document.createElement('div');
+      searchResultsContainer.setAttribute('id', 'search-results-container');
+      searchResultsContainer.style.display = 'none';
+      document.body.appendChild(searchResultsContainer);
+    }
+    searchInput.addEventListener('keyup', async (event) => {
+      const searchTerm = event.target.value;
+      if (!searchTerm.trim()) {
+        searchResultsContainer.innerHTML = '';
+        return;
+      }
+      // console.log("key:", searchTerm);
+      const response = await fetch(serverUrl + `/users?query=${searchTerm}`, {
+        method: 'GET',
+        headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+      });
+      if (response.status === 401) {
+        window.location.href = "../login";
+      }
+      const searchResults = await response.json();
+      console.log("search results:",searchResults);
+      const searchResultDivs = searchResults.response.map(searchResult => {
+        const searchResultDiv = document.createElement('div');
+        searchResultDiv.classList.add('search-result');
+
+        const profileLink = document.createElement('a');
+        profileLink.href = `./public-profile/${searchResult.id}`;
+
+        const leftDiv = document.createElement('div');
+        leftDiv.classList.add('left');
+
+        const rightDiv = document.createElement('div');
+        rightDiv.classList.add('right');
+
+        const profileImage = document.createElement("img");
+        profileImage.src = `${serverUrl + '/uploads/profilePictures/' + searchResult.photo}`;
+        leftDiv.appendChild(profileImage);
+
+        const profileName = document.createElement('span');
+        profileName.textContent = `${searchResult.firstName} ${searchResult.lastName}`;
+        rightDiv.appendChild(profileName);
+
+        profileLink.appendChild(leftDiv);
+        profileLink.appendChild(rightDiv);
+
+        searchResultDiv.appendChild(profileLink);
+
+        return searchResultDiv;
+      });
+      searchResultsContainer.innerHTML = 'No users with this name found';
+      if(searchResultDivs.length!==0){
+        searchResultsContainer.innerHTML = '';
+        searchResultDivs.forEach(searchResultDiv => {
+          searchResultsContainer.appendChild(searchResultDiv);
+        });
+      }
+      if (!document.body.contains(searchResultsContainer)) {
+        document.body.appendChild(searchResultsContainer);
+      } else {
+        searchResultsContainer.style.display = 'flex';
+      }
+    });
+
+    document.addEventListener('click', event => {
+      if (event.target !== searchInput && !searchResultsContainer.contains(event.target)) {
+        searchResultsContainer.style.display = 'none';
+      }
+    });
+
+    //search icon
+    const navbarCenter = document.getElementsByClassName('navbar-center')[0];
+    const navbarLeft = document.getElementsByClassName('navbar-left')[0];
+    const logoImg = document.querySelector('.logo img');
+    const searchIcon = document.getElementById('search-icon');
+    var isSearchVisible = false;
+
+    function addSearchIconFunctionality(){
+      searchIcon.addEventListener('click', () => {
+        if(!isSearchVisible){
+          navbarCenter.style.display='flex';
+          navbarCenter.style.padding='0px 10px';
+          navbarLeft.style.width = '20%';
+          navbarCenter.style.width='80%';
+          const navbar = document.getElementById('navbar');
+          navbar.style.height = '62px';
+          logoImg.style.width = '100%';
+          logoImg.style['object-fit'] = 'contain';
+          logoImg.style.transform = 'scale(120%)';
+          const logoHref = document.querySelector('.logo');
+          logoHref.style['margin-left'] = '0px';
+          logoHref.style.padding = '0px';
+
+          searchResultsContainer.style.width = '100%';
+          searchResultsContainer.style.boxSizing = 'border-box';
+          searchResultsContainer.style.borderRadius = '0px';
+          searchResultsContainer.style.height = 'calc(100vh - 62px - 62px)';
+          searchResultsContainer.style.maxHeight = 'calc(100vh - 62px - 62px)';
+          
+          isSearchVisible = true;
+        } else{
+          navbarCenter.style.display='none';
+          navbarLeft.style.width = '100%';
+          logoImg.style.transform = 'scale(80%)';
+
+          isSearchVisible = false;
+        }
+      });
+    }
+    addSearchIconFunctionality();
+    document.addEventListener('click', event => {
+      if (isSearchVisible && !searchIcon.contains(event.target) && !searchContainer.contains(event.target) && !searchResultsContainer.contains(event.target)) {
+        navbarCenter.style.display='none';
+        navbarLeft.style.width = '100%';
+        logoImg.style.transform = 'scale(80%)';
+        isSearchVisible = false;
+      }
+    });
+
+    //notifications:
+    async function notifications(){
+      const notificationButtonArray = document.querySelectorAll('.notification-button');
+      const notificationBadgeArray = document.querySelectorAll('.notification-badge');
+      var notificationButton;
+      var notificationBadge;
+      const navbarRightStyle =window.getComputedStyle(document.querySelector('.navbar-right')).getPropertyValue('display');
+      const navbarIconArray = document.querySelectorAll('.follow-requests-icon');
+      if(navbarRightStyle==='flex'){
+        notificationButton = notificationButtonArray[0];
+        notificationBadge = notificationBadgeArray[0];
+      } else if(navbarRightStyle==='none'){
+        notificationButton = notificationButtonArray[1];
+        notificationBadge = notificationBadgeArray[1];
+      }
+
+      const number = 20;
+      var interval = null;
+      var currentCount = parseInt(notificationBadge.textContent);
+      const currentUser = await getCurrentUser();
+      var clickedContainer = false;
+
+      socket.emit('join', currentUser.id);
+      console.log("join la room: ", currentUser.id);
+      socket.on('notification', function(message) {
+        console.log("notification");
+        const newCount = currentCount + 1;
+        currentCount = newCount;
+        notificationBadge.textContent = newCount;
+        if(!clickedContainer)
+          notificationBadge.style.display = 'flex';
+      })
+      
+      notificationButton.addEventListener('click', async () => {
+        currentCount = 0;
+        notificationBadge.style.display = 'none';
+        const containerExistence = document.querySelector('.notifications-container');
+        if (containerExistence) {
+          containerExistence.remove();
+          clickedContainer = false;
+          if(currentCount > 0)
+            notificationBadge.style.display = 'flex';
+          return;
+        }
+        const notificationsContainer = document.createElement('div');
+        notificationsContainer.classList.add('notifications-container');
+        try{
+          const response = await fetch(serverUrl + `/users/notifications?${number}`, {
+            method: 'GET', 
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          });
+          if (response.status === 401) {
+            window.location.href = "../login";
+          } else{
+            const notificationsJson = await response.json();
+            const notifications = notificationsJson.notifications;
+            if(notifications.length === 0){
+              const messageElement = document.createElement('p');
+              messageElement.textContent = 'No notifications at this time.';
+              notificationsContainer.appendChild(messageElement);
+            } else {
+              notifications.forEach(notification => {
+                console.log(notification);
+                const notificationSection = document.createElement('div');
+                notificationSection.classList.add('notification-section');
+                const notificationSectionLeft = document.createElement('div');
+                notificationSectionLeft.classList.add('notification-section-left');
+                const notificationSectionRight = document.createElement('div');
+                notificationSectionRight.classList.add('notification-section-right');
+                notificationSection.appendChild(notificationSectionLeft);
+                notificationSection.appendChild(notificationSectionRight);
+
+                const postLink = document.createElement('a');
+                const profileLink = document.createElement('a');
+                const profileImg = document.createElement('img');
+                postLink.href =  `post/${notification.Post.id}`;
+                postLink.appendChild(notificationSection)
+                profileImg.src =serverUrl + '/uploads/profilePictures/' + notification.notificating.photo;
+                profileImg.alt = 'notification user profile';
+                profileLink.appendChild(profileImg);
+                notificationSectionLeft.appendChild(profileLink);
+
+                const notificationContent = document.createElement('p');
+                notificationContent.textContent = notification.content;
+                notificationSectionRight.appendChild(notificationContent);
+
+                notificationsContainer.appendChild(postLink);
+              })
+            }
+          }
+        } catch (error) {
+          console.log(error);
+        }
+        document.body.appendChild(notificationsContainer);
+        clickedContainer = true;
+      });
+
+      document.addEventListener('click', event => {
+        if (event.target !== notificationButton) {
+          const containerExistence = document.querySelector('.notifications-container');
+          if (containerExistence) {
+            containerExistence.remove();
+            clickedContainer = false;
+            if(currentCount > 0)
+              notificationBadge.style.display = 'flex';
+          }
+        }
+      });
+    }
+    notifications();
+
+    //logout button in left menu
+    document.getElementById("logout-link").addEventListener("click", async function(event) {
+      event.preventDefault(); 
+
+      try{
+        const response = await fetch(serverUrl + "/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials:"include"
+        });
+        if(response.ok || response.status === 401){
+          window.location.href = "../login";
+        }
+      } catch(err){
+        console.log(err);
+      }
+    });
+
+    //import data from git to post
+    var summarizedData;
+    async function fetchUserRepos() {
+      try {
+        const response = await fetch(serverUrl + '/users/repos', {
+          method: 'GET',
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include"
+        });
+        const data = await response.json();
+        console.log("git repos:", data);
+
+        const repoDropdown = document.getElementById('repo-dropdown');
+        repoDropdown.innerHTML = '';
+
+        summarizedData = data.summarizedData;
+        data.summarizedData.forEach(repo => {
+          const option = document.createElement('option');
+          option.value = repo.title;
+          option.textContent = repo.title;
+          repoDropdown.appendChild(option);
+        });
+        
+        const container = document.getElementById('create-post-container-git');
+        container.style.display = 'flex';
+      } catch (error) {
+        alert("There was a problem while connecting with Github. It seems we cannot found an Github account added to this user. Ussualy only Github connected users can use this functionality.")
+        console.error(error);
+      }
+    }
+    
+    function closeButtonGit(){
+      const container = document.getElementById('create-post-container-git');
+      container.style.display = 'none';
+    }
+    var selectedRepo;
+    function chooseSelectedRepo() {
+      const repoDropdown = document.getElementById('repo-dropdown');
+      const selectedRepoTitle = repoDropdown.value;
+
+      selectedRepo = summarizedData.find(repo => repo.title === selectedRepoTitle);
+
+      const selectPostOptionsContainer = document.getElementById('options-container');
+      selectPostOptionsContainer.innerHTML = '';
+
+      for (const [key, value] of Object.entries(selectedRepo)) {
+        if (value !== null) {
+          const label = document.createElement('label');
+          label.textContent = key;
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.name = 'post-option';
+          checkbox.value = key;
+
+          selectPostOptionsContainer.appendChild(label);
+          selectPostOptionsContainer.appendChild(checkbox);
+        }
+      }
+      const container = document.getElementById('create-post-container-git');
+      container.style.display = 'none';
+      const selectPostOptions = document.getElementById('select-post-options');
+      selectPostOptions.style.display="flex";
+    }
+
+    function closeButtonOptions(){
+      const container = document.getElementById('select-post-options');
+      container.style.display = 'none';
+    }
+    function goBackToSelectRepo(){
+      const container = document.getElementById('select-post-options');
+      container.style.display = 'none';
+      const containerGit = document.getElementById('create-post-container-git');
+      containerGit.style.display = 'flex';
+    }
+    function populateForm() {
+      const checkboxes = document.querySelectorAll('input[name="post-option"]:checked');
+      
+      checkboxes.forEach(checkbox => {
+        const optionName = checkbox.value;
+
+        if (optionName === 'title') {
+          document.getElementById('description').value = selectedRepo.title;
+        } else if (optionName === 'link') {
+          document.getElementById('link').value = selectedRepo.link;
+        } else if (optionName === 'description') {
+          document.getElementById('description').value = selectedRepo.description;
+        }
+      });
+      const selectedPostOptions = document.getElementById('select-post-options');
+      selectedPostOptions.style.display="none";
+      const container = document.getElementById('github-repos-button');
+      container.style.display = 'none';
+    }
+
+
+    //post image width and height limitation
+    var fileInput = document.getElementById('photo');
+    var dimensionErrorInput = document.getElementById('dimension-error');
+  
+    fileInput.addEventListener('change', function() {
+      var file = fileInput.files[0];
+      
+      var image = new Image();
+      image.src = window.URL.createObjectURL(file);
+      
+      image.onload = function() {
+        var maxWidth = 800; // maximum allowed width
+        var maxHeight = 600; // maximum allowed height
+        
+        if (image.width > maxWidth || image.height > maxHeight) {
+          dimensionErrorInput.value = 'Invalid dimensions. Maximum allowed: ' + maxWidth + 'x' + maxHeight + ' pixels';
+          dimensionErrorInput.style.display="block";
+          fileInput.value = ''; // reset the file input field
+        } else{
+          dimensionErrorInput.style.display="none";
+        }
+      };
+    });
+
+  </script>
+  </body>
+</html>

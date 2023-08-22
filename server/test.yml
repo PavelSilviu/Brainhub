@@ -1,0 +1,62 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 20
+      arrivalRate: 1
+      name: "Warming up"
+    - duration: 20
+      arrivalRate: 5
+      name: "Ramping up"
+    - duration: 20
+      arrivalRate: 20
+      name: "Sustained load"
+
+scenarios:
+  - name: "User register, login and navigation to a popular user public page + follow request for it"
+    flow:
+      - exec:
+          func: generateRandomPhoto
+          attach:
+            - photo
+      - post:
+          url: "/users"
+          json:
+            firstName: "{{ $randomFirstName }}"
+            lastName: "{{ $randomLastName }}"
+            email: "{{ $randomEmail }}"
+            password: "{{ $randomPassword }}"
+            github: "{{ $randomWord }}"
+            photo: "{{ photo }}"
+      - think: 1
+      - post:
+          url: "/login"
+          json:
+            email: "johndoe@brainhub.com"
+            password: "123"
+      - get:
+          url: "/users"
+      - get:
+          url: "/users/current"
+      - think: 3
+      - get:
+          url: "/public-profile/45463347"
+      - get:
+          url: "/users/current"
+      - get:
+          url: "/users/45463347"
+      - get:
+          url: "/users/45463347/levels"
+      - get:
+          url: "/users/level-definitions"
+      - get:
+          url: "users/45463347/actions/count"
+      - get:
+          url: "/users/45463347/followings"
+      - get:
+          url: "/users/45463347/followers"
+      - get:
+          url: "/users/follow-status/45463347"
+      - get:
+          url: "/posts/users/45463347"
+      - post:
+          url: "/follows/12"

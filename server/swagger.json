@@ -1,0 +1,1447 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API Aplicație",
+    "description": "Description",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/auth/github": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "GitHub Authentication",
+        "description": "Initiates the GitHub authentication process.",
+        "parameters": [],
+        "responses": {
+          "307": {
+            "description": "Temporary Redirect"
+          }
+        }
+      }
+    },
+    "/auth/github/callback": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "GitHub Authentication Callback",
+        "description": "Callback endpoint for GitHub authentication process.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/login/": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User login",
+        "description": "Endpoint to handle user login.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/logout/": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User logout",
+        "description": "Endpoint to handle user logout.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/posts/bulk-create/{userId}": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Bulk create posts by user ID",
+        "description": "Endpoint to bulk create posts for a specific user.",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "sad",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/posts/bulk-create": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Bulk create posts",
+        "description": "Endpoint to bulk create posts for multiple users.",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/posts/": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Create a new post",
+        "description": "Endpoint to create a new post.",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "example": "any"
+                  },
+                  "link": {
+                    "example": "any"
+                  },
+                  "photo": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{id}/likes": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Create a like",
+        "description": "Endpoint to create a like for a post.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/posts/{id}/comments": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Create a comment",
+        "description": "Endpoint to create a comment.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/users/{userId}": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Get posts by user ID",
+        "description": "Endpoint to get posts by user ID.",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/Post"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/Post"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/posts/{id}": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Get a post",
+        "description": "Endpoint to get a specific post by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Post"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Posts"],
+        "summary": "Edit a post",
+        "description": "Endpoint to edit a post.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photo": {
+                    "example": "any"
+                  },
+                  "link": {
+                    "example": "any"
+                  },
+                  "description": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Delete a post",
+        "description": "Endpoint to delete a post.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/posts/{id}/likes/count": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Get likes count for a post",
+        "description": "Endpoint to get the number of likes for a specific post.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeCount"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeCount"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/posts/comments/{id}": {
+      "put": {
+        "tags": ["Posts"],
+        "summary": "Edit a comment",
+        "description": "Endpoint to edit a comment.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Delete a comment",
+        "description": "Endpoint to delete a comment.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/posts/likes/{id}": {
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Delete a like",
+        "description": "Endpoint to delete a like.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/bulk-create": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create users in bulk",
+        "description": "Endpoint to create multiple users in bulk.",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/follows/bulk-create": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create follow relationships in bulk",
+        "description": "Endpoint to create multiple follow relationships in bulk.",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create a user profile",
+        "description": "Endpoint to create a user profile.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "example": "any"
+                  },
+                  "lastName": {
+                    "example": "any"
+                  },
+                  "email": {
+                    "example": "any"
+                  },
+                  "password": {
+                    "example": "any"
+                  },
+                  "github": {
+                    "example": "any"
+                  },
+                  "photo": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get users",
+        "description": "Endpoint to get users.",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Edit user profile",
+        "description": "Endpoint to edit user profile.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "example": "any"
+                  },
+                  "lastName": {
+                    "example": "any"
+                  },
+                  "email": {
+                    "example": "any"
+                  },
+                  "password": {
+                    "example": "any"
+                  },
+                  "github": {
+                    "example": "any"
+                  },
+                  "photo": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete user profile",
+        "description": "Endpoint to delete user profile.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/follows/{id}": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Follow user",
+        "description": "Endpoint to follow a user.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/notifications/like/{postId}": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create like notification",
+        "description": "Endpoint to create a notification for a like on a post.",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/notifications/comment/{postId}": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create comment notification",
+        "description": "Endpoint to create a notification for a comment on a post.",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/current": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get current user",
+        "description": "Endpoint to get the details of the authenticated user.",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/{id}/followings": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get followings",
+        "description": "Endpoint to get the followings of a user.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/users/{id}/followers": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get followers",
+        "description": "Endpoint to get the followers of a user.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/users/follow-requests": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get follow requests",
+        "description": "Endpoint to get the follow requests for the authenticated user.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/Follow"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/Follow"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/users/notifications": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get notifications",
+        "description": "Endpoint to get notifications for a user.",
+        "parameters": [
+          {
+            "name": "count",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/Notification"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "array"
+                    },
+                    "items": {
+                      "$ref": "#/components/schemas/Notification"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/follow-status/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get follow status",
+        "description": "Endpoint to get the follow status between the authenticated user and another user.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowStatus"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user by ID",
+        "description": "Endpoint to get a specific user by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/follow-requests/accept/{id}": {
+      "put": {
+        "tags": ["Users"],
+        "summary": "Accept follow request",
+        "description": "Endpoint to accept a follow request.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/follow-requests/reject/{id}": {
+      "put": {
+        "tags": ["Users"],
+        "summary": "Reject follow request",
+        "description": "Endpoint to reject a follow request.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/unfollow/{id}": {
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Unfollow user",
+        "description": "Endpoint to unfollow a user.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "github": {
+            "type": "string"
+          },
+          "photo": {
+            "type": "string"
+          }
+        }
+      },
+      "Post": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "integer"
+          },
+          "photo": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          }
+        }
+      },
+      "Follow": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "followerId": {
+            "type": "integer"
+          },
+          "followingId": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "accepted", "rejected"]
+          }
+        }
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "notificatedId": {
+            "type": "integer"
+          },
+          "notificatingId": {
+            "type": "integer"
+          },
+          "content": {
+            "type": "string"
+          },
+          "viewed": {
+            "type": "string",
+            "enum": ["yes", "no"]
+          }
+        }
+      },
+      "LikeCount": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer"
+          }
+        }
+      },
+      "FollowStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["pending", "accepted", "rejected"]
+          }
+        }
+      }
+    }
+  }
+}
