@@ -8,7 +8,8 @@ Această platformă colaborativă are ca scop oferirea unei soluții pentru dezv
 ![Creating a post using GitHub REST API](https://github.com/PavelSilviu/Brainhub/blob/e6ef10f5ad2a5578c6f66ea4f56f8cba25c9655c/readme/git-create-post.png)
 ![Admin Dashboard](https://github.com/PavelSilviu/Brainhub/blob/e6ef10f5ad2a5578c6f66ea4f56f8cba25c9655c/readme/localhost_3000_adminDashboard%20(1).png)
 
-
+## Prezentare live
+[Vezi prezentare live](https://www.canva.com/design/DAFnKXu1_UU/TTUY8lMZ1sFvEfN7qcpEuQ/edit?utm_content=DAFnKXu1_UU&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
 
 
 ## Caracteristici Cheie
