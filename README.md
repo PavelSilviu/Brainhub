@@ -2,6 +2,15 @@
 
 Această platformă colaborativă are ca scop oferirea unei soluții pentru dezvoltatorii de software, indiferent de nivelul de experiență, pentru a rămâne conectați la noutățile și schimbările din lumea informaticii. Într-un mediu în care informațiile se schimbă rapid, este esențial să rămânem motivați și actualizați pentru a ne menține competențele și inspirația în dezvoltarea software.
 
+## Prezentare vizuala
+![Home Page](https://github.com/PavelSilviu/Brainhub/blob/e6ef10f5ad2a5578c6f66ea4f56f8cba25c9655c/readme/localhost_3000_home%20(1).png)
+![Public Profile Levels](https://github.com/PavelSilviu/Brainhub/blob/e6ef10f5ad2a5578c6f66ea4f56f8cba25c9655c/readme/level-contribution.png)
+![Creating a post using GitHub REST API](https://github.com/PavelSilviu/Brainhub/blob/e6ef10f5ad2a5578c6f66ea4f56f8cba25c9655c/readme/git-create-post.png)
+![Admin Dashboard](https://github.com/PavelSilviu/Brainhub/blob/e6ef10f5ad2a5578c6f66ea4f56f8cba25c9655c/readme/localhost_3000_adminDashboard%20(1).png)
+
+
+
+
 ## Caracteristici Cheie
 
 - Oferă o modalitate convenabilă de a fi la curent cu noutățile din domeniul informaticii.
@@ -26,6 +35,3 @@ Platforma propusă se bazează pe teoria piramidei lui Maslow, aducând îmbună
 
 În acest moment, nu se acceptă contribuții externe la proiect. Platforma este dezvoltată pentru uz personal, dar feedback-ul și sugestiile sunt întotdeauna binevenite.
 
-## Licență
-
-Proiectul este licențiat sub [Numele Licenței]. Detalii suplimentare pot fi găsite în fișierul [LICENSE](link către fișierul LICENSE).
