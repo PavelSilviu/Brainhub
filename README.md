@@ -1,6 +1,6 @@
 # Platformă Colaborativă pentru Proiecte Software pe baza API-ului GitHub
 
-Această platformă colaborativă are ca scop oferirea unei soluții pentru dezvoltatorii de software, indiferent de nivelul de experiență, pentru a rămâne conectați la noutățile și schimbările din lumea informaticii. Într-un mediu în care informațiile se schimbă rapid, este esențial să rămânem motivați și actualizați pentru a ne menține competențele și inspirația în dezvoltarea software.
+Această platformă colaborativă are ca scop oferirea unei soluții pentru dezvoltatorii de software, indiferent de nivelul de experiență, pentru a rămâne conectați la noutățile și schimbările din lumea informaticii. Într-un mediu în care informațiile se schimbă rapid, este esențial să rămânem motivați și actualizați pentru a ne menține competențele și inspirația în dezvoltarea software. 
 
 ## Prezentare vizuala
 ![Home Page](https://github.com/PavelSilviu/Brainhub/blob/e6ef10f5ad2a5578c6f66ea4f56f8cba25c9655c/readme/localhost_3000_home%20(1).png)
